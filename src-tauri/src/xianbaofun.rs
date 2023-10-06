@@ -1,13 +1,17 @@
 use chrono::prelude::*;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use std::{
     sync::atomic::{AtomicU64, Ordering},
     thread,
 };
 use tauri::{UserAttentionType, Window};
-use tokio::time;
+use tokio::{
+    fs::{self, OpenOptions},
+    time,
+};
 
 use std::cmp;
 
@@ -36,11 +40,11 @@ pub struct Push {
 #[tauri::command]
 pub async fn get_data(window: Window, app: tauri::AppHandle) {
     if R.load(Ordering::Relaxed) != 0 {
+        let data = read_to_file().await;
+        window.emit("listen_data", (&data)).unwrap();
         return;
     }
-    // if !params.is_empty() {
-    //     return ;
-    // }
+
     tokio::spawn(async move {
         R.fetch_add(1, Ordering::Relaxed);
         let mut old_list = Vec::new();
@@ -62,6 +66,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
             if old_list.is_empty() {
                 window.emit("listen_data", &html).unwrap();
                 old_list = html;
+                write_to_file(&old_list).await;
                 println!("old_list: {:?}", &old_list);
             } else {
                 // 取差集
@@ -92,7 +97,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                         notify(body, app.clone());
                     }
                 });
-
+                write_to_file(&html).await;
                 old_list = html;
             }
             // 睡眠15秒
@@ -190,4 +195,33 @@ pub fn notify(body: &Push, app: tauri::AppHandle) {
         .unwrap();
     thread::sleep(time::Duration::from_secs(5));
     let _ = window.close();
+}
+
+// 写入json文件
+async fn write_to_file(data: &PushList) {
+    let file_path = r".\data\xianbaofun.json";
+    let _ = fs::create_dir_all(r".\data").await;
+    let file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(file_path)
+        .await
+        .unwrap()
+        .into_std()
+        .await;
+    serde_json::to_writer(file, &data).unwrap();
+}
+
+// 读取json文件
+async fn read_to_file() -> PushList {
+    let file_path = r".\data\xianbaofun.json";
+    let file = OpenOptions::new()
+        .read(true)
+        .open(file_path)
+        .await
+        .unwrap()
+        .into_std()
+        .await;
+    serde_json::from_reader(file).unwrap()
 }

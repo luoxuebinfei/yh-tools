@@ -80,7 +80,7 @@ const get_data = async () => {
 get_data();
 
 const rowClass = () => {
-      return ""
+  return "";
 };
 
 const test = async () => {
