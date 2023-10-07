@@ -45,7 +45,9 @@ async fn create_window(app: tauri::AppHandle) {
     // time::sleep(time::Duration::from_millis(500)).await;
     for _i in 0..10 {
         time::sleep(time::Duration::from_millis(100)).await;
-        window.emit("test", "test").unwrap();
+        window
+            .emit("test", r#"<span class="text-red-600 text-9xl bg-red-600">test</span>"#)
+            .unwrap();
     }
 }
 
@@ -57,7 +59,13 @@ fn main() {
         })
         .system_tray(tray::menu())
         .on_system_tray_event(tray::handler)
-        .invoke_handler(tauri::generate_handler![greet, create_window, get_data])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            create_window,
+            get_data,
+            xianbaofun::return_keyword,
+            xianbaofun::change_keyword
+        ])
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 event.window().hide().unwrap();

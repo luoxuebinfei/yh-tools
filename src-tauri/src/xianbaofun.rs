@@ -19,7 +19,7 @@ static R: AtomicU64 = AtomicU64::new(0);
 
 pub type PushList = Vec<Push>;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Push {
     cateid: String,
     catename: String,
@@ -75,8 +75,9 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                     .collect::<Vec<_>>();
                 println!("minusion: {:?}", minusion);
                 window.emit("listen_data", &minusion).unwrap();
+                let b = read_keyword().await;
                 // 对比消息相似度，如果大于0.8则发送通知
-                minusion.iter().for_each(|u| {
+                minusion.into_iter().for_each(|u| {
                     let mut a = 0;
                     for i in old_list.iter() {
                         let sim = sim_jaro(&u.title, &i.title);
@@ -84,15 +85,19 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                             a += 1;
                         }
                     }
-                    if a > 0 {
-                        // let _ = tauri::api::notification::Notification::new(
-                        //     &app.config().tauri.bundle.identifier,
-                        // )
-                        // .title(&u.title)
-                        // .body(&u.content)
-                        // .sound("Default")
-                        // .show();
-                        let body = u;
+                    // let b = vec![String::from("水"), String::from("猫超"), String::from("JD"),String::from("美团"),String::from("拼多多")];
+                    let c = b.iter().filter(|x| u.title.contains(&**x)).collect::<Vec<_>>();
+                    let d = b.iter().filter(|x| u.content.contains(&**x)).collect::<Vec<_>>();
+                    println!("filter: {:?}", c);
+                    if a > 0 || !c.is_empty() || !d.is_empty() {
+                        let mut body = u.clone();
+                        for i in c {
+                            body.title = body.title.replace(&*i, &format!("<span class=\"text-red-600\">{i}</span>"));
+                        }
+                        for i in d {
+                            body.content = body.content.replace(&*i, &format!("<span class=\"text-red-600\">{i}</span>"));
+                        }
+                        
                         notify(body, app.clone());
                     }
                 });
@@ -150,7 +155,7 @@ pub fn sim_jaro(s1: &str, s2: &str) -> f64 {
     (m / s1_len as f64 + m / s2_len as f64 + (m - t) / m) / 3.0
 }
 
-pub fn notify(body: &Push, app: tauri::AppHandle) {
+pub fn notify(body:Push, app: tauri::AppHandle) {
     // 生成随机的lable_name
     let rand_string: String = thread_rng()
         .sample_iter(&Alphanumeric)
@@ -182,7 +187,7 @@ pub fn notify(body: &Push, app: tauri::AppHandle) {
     for _i in 0..10 {
         // let _ = time::sleep(time::Duration::from_millis(100));
         thread::sleep(time::Duration::from_millis(100));
-        window.emit("test", &*body).unwrap();
+        window.emit("body", &body).unwrap();
     }
     for _i in 0..10 {
         thread::sleep(time::Duration::from_millis(100));
@@ -223,4 +228,57 @@ async fn read_to_file() -> PushList {
         .into_std()
         .await;
     serde_json::from_reader(file).unwrap()
+}
+
+
+// 读取关键词的json文件
+async fn read_keyword() -> Vec<String> {
+    let file_path = r".\data\xianbacfun_keyword.json";
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(file_path)
+        .await
+        .unwrap()
+        .into_std()
+        .await;
+    match serde_json::from_reader(file) {
+        Ok(data) => {
+            data
+        },
+        Err(e) => {
+            if e.is_eof() {
+                vec![]
+            } else {
+                panic!("{}", e);
+            }
+        }
+    }
+}
+
+// 写入关键词的json文件
+async fn write_keyword(data: Vec<String>) {
+    let file_path = r".\data\xianbacfun_keyword.json";
+    let _ = fs::create_dir_all(r".\data").await;
+    let file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(file_path)
+        .await
+        .unwrap()
+        .into_std()
+        .await;
+    serde_json::to_writer(file, &data).unwrap();
+}
+
+#[tauri::command]
+pub async fn return_keyword() -> Vec<String> {
+    read_keyword().await
+}
+
+#[tauri::command]
+pub async fn change_keyword(params: Vec<String>) {
+    write_keyword(params).await;
 }

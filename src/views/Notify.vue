@@ -10,10 +10,10 @@
       class="w-full fixed rounded-b-lg p-2 main glass"
       @click="closeAndOpenUrl"
     >
-      <div class="text-sm font-semibold truncate ... ">
-        {{ data.title }}
+      <div class="text-sm font-semibold truncate ... " v-html="data.title">
       </div>
-      <div class="text-xs font-sm">{{ data.content }}</div>
+      <div class="text-xs font-sm" v-html="data.content"></div>
+      <div v-html="msg"></div>
     </div>
   </div>
 </template>
@@ -60,7 +60,7 @@ onMounted(() => {
 });
 onBeforeMount(() => {
   const listen = () => {
-    appWindow.listen("test", (event) => {
+    appWindow.listen("body", (event) => {
       console.log(event);
       data.value = event.payload as dataIterface;
     });
@@ -72,6 +72,12 @@ onBeforeMount(() => {
     });
   };
   listen2();
+  const listen3 = () => {
+    appWindow.listen("test", (event) => {
+      msg.value = event.payload as string;
+    });
+  };
+  listen3();
 });
 </script>
 
@@ -117,5 +123,9 @@ onBeforeMount(() => {
   background: rgba(185, 185, 185, 0.8);
   backdrop-filter: blur(25px);
   /* border-radius: 7px; */
+}
+
+span:deep(.text-red-600) {
+  color: red;
 }
 </style>
