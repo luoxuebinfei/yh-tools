@@ -3,7 +3,7 @@
 
 mod xianbaofun;
 
-use tauri::Manager;
+mod tray;
 use tokio::time;
 use xianbaofun::*;
 
@@ -55,7 +55,16 @@ fn main() {
             set_window_shadow(app);
             Ok(())
         })
+        .system_tray(tray::menu())
+        .on_system_tray_event(tray::handler)
         .invoke_handler(tauri::generate_handler![greet, create_window, get_data])
+        .on_window_event(|event| match event.event() {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                event.window().hide().unwrap();
+                api.prevent_close();
+            }
+            _ => {}
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

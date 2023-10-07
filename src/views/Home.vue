@@ -27,7 +27,7 @@ import { WebviewWindow, appWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
 import { ref } from "vue";
 import { open } from "@tauri-apps/api/shell";
-import { da } from "element-plus/es/locale";
+
 
 const data = ref([]);
 

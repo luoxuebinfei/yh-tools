@@ -1,7 +1,6 @@
 use chrono::prelude::*;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 use std::{
     sync::atomic::{AtomicU64, Ordering},
@@ -41,7 +40,7 @@ pub struct Push {
 pub async fn get_data(window: Window, app: tauri::AppHandle) {
     if R.load(Ordering::Relaxed) != 0 {
         let data = read_to_file().await;
-        window.emit("listen_data", (&data)).unwrap();
+        window.emit("listen_data", &data).unwrap();
         return;
     }
 
