@@ -1,5 +1,5 @@
 <template>
-  <div class="static rounded-lg">
+  <div class="static rounded-lg" @mouseenter="changeHoverStatus" @mouseleave="changeHoverStatus">
   <audio src="src\assets\sound\Windows Notify System Generic.wav" autoplay></audio>
     <div data-tauri-drag-region class="titlebar glass rounded-t-lg">
       <div class="titlebar-button" id="titlebar-close">
@@ -22,6 +22,7 @@
 import { onBeforeMount, onMounted, ref } from "vue";
 import { appWindow, WebviewWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/api/shell";
+import { invoke } from "@tauri-apps/api/tauri";
 
 export interface dataIterface {
   cateid: string;
@@ -38,6 +39,14 @@ export interface dataIterface {
   url: string;
   yuanurl: string;
 }
+
+// 鼠标移入移出
+const HoverStatus = ref(false);
+// 改变鼠标移入移出状态
+const changeHoverStatus = () => {
+  HoverStatus.value = !HoverStatus.value;
+  invoke("change_hover_status", { param: HoverStatus.value });
+};
 
 const msg = ref("");
 const data = ref({} as dataIterface);

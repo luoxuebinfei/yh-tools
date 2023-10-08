@@ -10,6 +10,7 @@ use xianbaofun::*;
 use crate::utils::set_window_shadow;
 
 mod utils;
+mod notify;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -64,7 +65,8 @@ fn main() {
             create_window,
             get_data,
             xianbaofun::return_keyword,
-            xianbaofun::change_keyword
+            xianbaofun::change_keyword,
+            notify::change_hover_status
         ])
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {

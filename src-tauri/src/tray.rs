@@ -1,3 +1,5 @@
+// 系统托盘相关配置文件
+
 use tauri::{
     AppHandle, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
     SystemTrayMenuItem, UserAttentionType,

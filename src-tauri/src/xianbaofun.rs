@@ -1,18 +1,16 @@
 use chrono::prelude::*;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 
-use std::{
-    sync::atomic::{AtomicU64, Ordering},
-    thread,
-};
-use tauri::{UserAttentionType, Window};
+use std::sync::atomic::{AtomicU64, Ordering};
+use tauri::Window;
 use tokio::{
     fs::{self, OpenOptions},
     time,
 };
 
 use std::cmp;
+
+use crate::notify;
 
 // 作为是否已有线程访问线报库的全局变量
 static R: AtomicU64 = AtomicU64::new(0);
@@ -21,19 +19,19 @@ pub type PushList = Vec<Push>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Push {
-    cateid: String,
-    catename: String,
-    comments: i64,
-    content: String,
-    datetime: String,
-    id: i64,
-    louzhu: String,
-    louzhuregtime: Option<serde_json::Value>,
-    shijianchuo: i64,
-    shorttime: String,
-    title: String,
-    url: String,
-    yuanurl: String,
+    pub cateid: String,
+    pub comments: i64,
+    pub content: String,
+    pub catename: String,
+    pub datetime: String,
+    pub id: i64,
+    pub louzhu: String,
+    pub louzhuregtime: Option<serde_json::Value>,
+    pub shijianchuo: i64,
+    pub shorttime: String,
+    pub title: String,
+    pub url: String,
+    pub yuanurl: String,
 }
 
 #[tauri::command]
@@ -86,19 +84,29 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                         }
                     }
                     // let b = vec![String::from("水"), String::from("猫超"), String::from("JD"),String::from("美团"),String::from("拼多多")];
-                    let c = b.iter().filter(|x| u.title.contains(&**x)).collect::<Vec<_>>();
-                    let d = b.iter().filter(|x| u.content.contains(&**x)).collect::<Vec<_>>();
+                    let c = b
+                        .iter()
+                        .filter(|x| u.title.contains(&**x))
+                        .collect::<Vec<_>>();
+                    let d = b
+                        .iter()
+                        .filter(|x| u.content.contains(&**x))
+                        .collect::<Vec<_>>();
                     println!("filter: {:?}", c);
                     if a > 0 || !c.is_empty() || !d.is_empty() {
                         let mut body = u.clone();
                         for i in c {
-                            body.title = body.title.replace(&*i, &format!("<span class=\"text-red-600\">{i}</span>"));
+                            body.title = body
+                                .title
+                                .replace(&*i, &format!("<span class=\"text-red-600\">{i}</span>"));
                         }
                         for i in d {
-                            body.content = body.content.replace(&*i, &format!("<span class=\"text-red-600\">{i}</span>"));
+                            body.content = body
+                                .content
+                                .replace(&*i, &format!("<span class=\"text-red-600\">{i}</span>"));
                         }
-                        
-                        notify(body, app.clone());
+
+                        notify::notify(body, app.clone());
                     }
                 });
                 write_to_file(&html).await;
@@ -155,52 +163,6 @@ pub fn sim_jaro(s1: &str, s2: &str) -> f64 {
     (m / s1_len as f64 + m / s2_len as f64 + (m - t) / m) / 3.0
 }
 
-pub fn notify(body:Push, app: tauri::AppHandle) {
-    // 生成随机的lable_name
-    let rand_string: String = thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(30)
-        .map(char::from)
-        .collect();
-
-    let content_num = body.content.chars().count();
-    let add_height = content_num / 25 * 16;
-    // if add_height > 20 {
-    //     add_height = add_height - 20;
-    // }
-    // let body = body.clone();
-    let window = tauri::WindowBuilder::new(
-        &app,
-        rand_string.clone(),
-        tauri::WindowUrl::App("/notify".into()),
-    )
-    .title("test")
-    .transparent(true)
-    .decorations(false)
-    .always_on_top(true)
-    .skip_taskbar(true)
-    .position(1590.0, 942.0 - add_height as f64)
-    .inner_size(320.0, 80.0 + add_height as f64)
-    .resizable(false)
-    .build()
-    .unwrap();
-    for _i in 0..10 {
-        // let _ = time::sleep(time::Duration::from_millis(100));
-        thread::sleep(time::Duration::from_millis(100));
-        window.emit("body", &body).unwrap();
-    }
-    for _i in 0..10 {
-        thread::sleep(time::Duration::from_millis(100));
-        window.emit("label_name", &rand_string).unwrap();
-    }
-
-    let _ = window
-        .request_user_attention(Some(UserAttentionType::Critical))
-        .unwrap();
-    thread::sleep(time::Duration::from_secs(5));
-    let _ = window.close();
-}
-
 // 写入json文件
 async fn write_to_file(data: &PushList) {
     let file_path = r".\data\xianbaofun.json";
@@ -230,7 +192,6 @@ async fn read_to_file() -> PushList {
     serde_json::from_reader(file).unwrap()
 }
 
-
 // 读取关键词的json文件
 async fn read_keyword() -> Vec<String> {
     let file_path = r".\data\xianbacfun_keyword.json";
@@ -244,9 +205,7 @@ async fn read_keyword() -> Vec<String> {
         .into_std()
         .await;
     match serde_json::from_reader(file) {
-        Ok(data) => {
-            data
-        },
+        Ok(data) => data,
         Err(e) => {
             if e.is_eof() {
                 vec![]

@@ -1,3 +1,5 @@
+// 设置窗口圆角透明阴影等相关文件
+
 use tauri::{Manager, Runtime};
 use window_shadows::set_shadow;
 
