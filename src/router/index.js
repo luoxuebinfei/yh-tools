@@ -1,5 +1,11 @@
-import {createRouter, createWebHistory, createWebHashHistory} from 'vue-router'
-import { defineAsyncComponent } from 'vue'
+import {createRouter, createWebHistory, createWebHashHistory} from 'vue-router';
+import { defineAsyncComponent } from 'vue';
+
+// 静态导入页面
+import Home from '../views/Home.vue';
+import Settings from '../views/Setting.vue';
+import Notify from '../views/Notify.vue';
+
 
 const router = createRouter({ 
   // history: createWebHashHistory(),  // hash 模式
@@ -8,7 +14,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: defineAsyncComponent(() => import(/* @vite-ignore */`../views/Home.vue`)),
+      component: Home,
       meta: {
         title: '主页',
       },
@@ -16,7 +22,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: defineAsyncComponent(() => import(/* @vite-ignore */`../views/setting.vue`)),
+      component: Settings,
       meta: {
         title: '设置页',
       },
@@ -24,7 +30,7 @@ const router = createRouter({
     {
       path: '/notify',
       name: 'notify',
-      component: defineAsyncComponent(() => import(/* @vite-ignore */`../views/notify.vue`)),
+      component: Notify,
       meta: {
         title: '通知页',
       }
