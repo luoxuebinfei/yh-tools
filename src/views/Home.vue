@@ -2,6 +2,14 @@
   <!-- <el-button @click="test">点击</el-button> -->
   <div class="h-full">
     <div class="Container">
+      <div>
+        <div
+          class="text-sm text-slate-500 italic"
+          v-show="listen_time.length !== 0 && isKeywordShow"
+        >
+          上次更新时间: {{ listen_time }}
+        </div>
+      </div>
       <el-tooltip
         class="box-item"
         effect="dark"
@@ -51,7 +59,7 @@
         >收起</el-button
       >
     </div>
-    <div style="height:calc(100% - 22px)">
+    <div style="height: calc(100% - 22px)">
       <el-auto-resizer>
         <template #default="{ height, width }">
           <el-table-v2
@@ -77,7 +85,7 @@ import {
 } from "@tauri-apps/api/notification";
 import { WebviewWindow, appWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
-import { ref, nextTick } from "vue";
+import { ref, nextTick,onBeforeUnmount } from "vue";
 import { open } from "@tauri-apps/api/shell";
 import { ElInput } from "element-plus";
 import { Bell, ArrowUp } from "@element-plus/icons-vue";
@@ -112,16 +120,31 @@ const columnEvents = {
   },
 };
 
+const listen_time = ref("");
+const listen_timestamp = ref(0);
 const get_data = async () => {
   invoke("get_data");
-  var unlisten = appWindow.listen("listen_data", (event) => {
-    console.log(new Date(Date.parse(new Date().toString())));
+  appWindow.listen("listen_data", (event) => {
+    // console.log(new Date(Date.parse(new Date().toString())));
     const nowtime = new Date().getTime();
     data.value = [...(event.payload as never[]), ...data.value];
     if (data.value.length > 20) {
       data.value = data.value.slice(0, 20);
     }
-    console.log(event);
+    // console.log(event);
+  });
+  appWindow.listen("listen_data_time", (event) => {
+    listen_timestamp.value = event.payload as number;
+    const date = new Date(event.payload as number);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // 添加前导零
+    const day = date.getDate().toString().padStart(2, "0"); // 添加前导零
+    const hour = date.getHours().toString().padStart(2, "0"); // 添加前导零
+    const minute = date.getMinutes().toString().padStart(2, "0"); // 添加前导零
+    const second = date.getSeconds().toString().padStart(2, "0"); // 添加前导零
+
+    const formattedDateTime = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+    listen_time.value = formattedDateTime;
   });
 };
 get_data();
@@ -185,15 +208,35 @@ const handleInputConfirm = () => {
   inputVisible.value = false;
   inputValue.value = "";
 };
+
+// 设置一个定时器，每隔3分钟检查后台服务是否正常
+// let timerId = setTimeout(() => {
+//   let timerId = setInterval(() => {
+//     // 获取当前的时间戳
+//     let now_timestamp = Date.parse(new Date().toString());
+//     console.log(now_timestamp);
+//     if (now_timestamp - listen_timestamp.value > 170000) {
+//       console.log("检测到后台服务异常");
+//       invoke("check_xianbao_server").then(() => {
+//         invoke("get_data");
+//       });
+//     }
+//   }, 1000);
+//   return timerId;
+// }, 1000 * 10);
+
+// onBeforeUnmount(() => {
+//   clearInterval(timerId);
+// });
 </script>
 
-<style>
+<style scoped>
 div.el-table-v2__row:hover {
   cursor: pointer;
 }
 .Container {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
 }
 /*关键词按钮*/
 #keywordBell {

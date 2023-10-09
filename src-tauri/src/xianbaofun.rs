@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{Ordering, AtomicBool};
 use tauri::Window;
 use tokio::{
     fs::{self, OpenOptions},
@@ -13,7 +13,7 @@ use std::cmp;
 use crate::notify;
 
 // 作为是否已有线程访问线报库的全局变量
-static R: AtomicU64 = AtomicU64::new(0);
+static R: AtomicBool = AtomicBool::new(false);
 
 pub type PushList = Vec<Push>;
 
@@ -36,14 +36,14 @@ pub struct Push {
 
 #[tauri::command]
 pub async fn get_data(window: Window, app: tauri::AppHandle) {
-    if R.load(Ordering::Relaxed) != 0 {
+    if R.load(Ordering::Relaxed) {
         let data = read_to_file().await;
         window.emit("listen_data", &data).unwrap();
         return;
     }
-
-    tokio::spawn(async move {
-        R.fetch_add(1, Ordering::Relaxed);
+    
+    let _a = tokio::spawn(async move {
+        R.store(true, Ordering::Relaxed);
         let mut old_list = Vec::new();
         loop {
             let html = reqwest::get("http://new.xianbao.fun/plus/json/push.json")
@@ -60,6 +60,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                 }
             };
             println!("{}", Local::now());
+            window.emit("listen_data_time", Local::now().timestamp_millis()).unwrap();
             if old_list.is_empty() {
                 window.emit("listen_data", &html).unwrap();
                 old_list = html;
@@ -232,12 +233,20 @@ async fn write_keyword(data: Vec<String>) {
     serde_json::to_writer(file, &data).unwrap();
 }
 
+// 从文件中读取关键词
 #[tauri::command]
 pub async fn return_keyword() -> Vec<String> {
     read_keyword().await
 }
 
+// 改变关键词时写入文件
 #[tauri::command]
 pub async fn change_keyword(params: Vec<String>) {
     write_keyword(params).await;
 }
+
+// xianbao服务循环不可用时将状态改为false
+// #[tauri::command]
+// pub async fn check_xianbao_server() {
+//     R.store(false, Ordering::Relaxed);
+// }
