@@ -54,7 +54,7 @@ pub fn notify(body:Push, app: tauri::AppHandle) {
     thread::sleep(time::Duration::from_secs(5));
     while ISHOVER.load(Ordering::Relaxed) {}
     thread::sleep(time::Duration::from_millis(500));
-    let _ = window.close();
+    let _ = window.close().unwrap();
 }
 
 // 前端发送鼠标是否移入/移出通知框的事件

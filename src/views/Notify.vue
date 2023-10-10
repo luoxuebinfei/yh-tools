@@ -56,6 +56,7 @@ const closeAndOpenUrl = () => {
   const mainWindow = WebviewWindow.getByLabel(lable_name.value);
   if (mainWindow) {
     open(`http://new.xianbao.fun${data.value.url}`);
+    invoke("change_hover_status", { param: false });
     mainWindow.close();
   }
 };
@@ -64,7 +65,7 @@ const closeAndOpenUrl = () => {
 onMounted(() => {
   document
     .getElementById("titlebar-close")!
-    .addEventListener("click", () => appWindow.close());
+    .addEventListener("click", () => {invoke("change_hover_status", { param: false });appWindow.close()});
   console.log("onMounted------", document.getElementById("titlebar-close"));
 });
 onBeforeMount(() => {
