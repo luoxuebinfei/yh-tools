@@ -209,25 +209,12 @@ const handleInputConfirm = () => {
   inputValue.value = "";
 };
 
-// 设置一个定时器，每隔3分钟检查后台服务是否正常
-// let timerId = setTimeout(() => {
-//   let timerId = setInterval(() => {
-//     // 获取当前的时间戳
-//     let now_timestamp = Date.parse(new Date().toString());
-//     console.log(now_timestamp);
-//     if (now_timestamp - listen_timestamp.value > 170000) {
-//       console.log("检测到后台服务异常");
-//       invoke("check_xianbao_server").then(() => {
-//         invoke("get_data");
-//       });
-//     }
-//   }, 1000);
-//   return timerId;
-// }, 1000 * 10);
-
-// onBeforeUnmount(() => {
-//   clearInterval(timerId);
-// });
+const listen_sever = () => {
+  appWindow.listen("xianbao_server_close", (event) => {
+    location.reload();
+  })
+}
+listen_sever();
 </script>
 
 <style scoped>

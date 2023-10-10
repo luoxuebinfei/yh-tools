@@ -41,8 +41,10 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
         window.emit("listen_data", &data).unwrap();
         return;
     }
-    
-    let _a = tokio::spawn(async move {
+    // 克隆window以供后续使用
+    let window_clone = window.clone();
+    let mut set = tokio::task::JoinSet::new();
+    let _a = set.spawn(async move {
         R.store(true, Ordering::Relaxed);
         let mut old_list = Vec::new();
         loop {
@@ -117,6 +119,12 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
             time::sleep(time::Duration::from_secs(15)).await;
         }
     });
+    while let Some(_) = set.join_next().await {
+        // 当线程意外退出时，将R变量设置为false
+        R.store(false, Ordering::Relaxed);
+        // 发送一个通知，让前端刷新页面重启线程
+        window_clone.emit("xianbao_server_close", true).unwrap();
+    }
 }
 
 /// jaro similarity 字符串相似度算法
