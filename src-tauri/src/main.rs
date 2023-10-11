@@ -4,13 +4,14 @@
 mod xianbaofun;
 
 mod tray;
+use tauri::{api::notification::Notification, Manager};
 use tokio::time;
 use xianbaofun::*;
 
 use crate::utils::set_window_shadow;
 
-mod utils;
 mod notify;
+mod utils;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -47,13 +48,31 @@ async fn create_window(app: tauri::AppHandle) {
     for _i in 0..10 {
         time::sleep(time::Duration::from_millis(100)).await;
         window
-            .emit("test", r#"<span class="text-red-600 text-9xl bg-red-600">test</span>"#)
+            .emit(
+                "test",
+                r#"<span class="text-red-600 text-9xl bg-red-600">test</span>"#,
+            )
             .unwrap();
     }
 }
 
+#[tauri::command]
+async fn test2(app: tauri::AppHandle) {
+    let window_all = app.windows();
+    println!("{:?}", window_all.keys());
+}
+
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _, cwd| {
+            // 防止重复运行程序
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("该程序正在运行中，请不要再次启动！")
+                .body(cwd)
+                .sound("Default")
+                .show()
+                .unwrap();
+        }))
         .setup(|app| {
             set_window_shadow(app);
             Ok(())
@@ -66,7 +85,8 @@ fn main() {
             get_data,
             xianbaofun::return_keyword,
             xianbaofun::change_keyword,
-            notify::change_hover_status
+            notify::change_hover_status,
+            test2
         ])
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {

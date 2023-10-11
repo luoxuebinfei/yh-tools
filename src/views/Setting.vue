@@ -2,6 +2,7 @@
     <div>
         设置页面
         <el-button @click="test">点击</el-button>
+        <el-button @click="test2">测试2</el-button>
     </div>
 </template>
 
@@ -20,6 +21,9 @@ const test =()=>{
     //     console.log(e);
     //   });
     invoke("create_window");
+}
+const test2 = () => {
+    invoke("test2");
 }
 
 </script>

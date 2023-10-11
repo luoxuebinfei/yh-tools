@@ -119,6 +119,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
             time::sleep(time::Duration::from_secs(15)).await;
         }
     });
+    // set.join_next().await;
     while let Some(_) = set.join_next().await {
         // 当线程意外退出时，将R变量设置为false
         R.store(false, Ordering::Relaxed);
@@ -191,8 +192,11 @@ async fn write_to_file(data: &PushList) {
 // 读取json文件
 async fn read_to_file() -> PushList {
     let file_path = r".\data\xianbaofun.json";
+    let _ = fs::create_dir_all(r".\data").await;
     let file = OpenOptions::new()
         .read(true)
+        .write(true)
+        .create(true)
         .open(file_path)
         .await
         .unwrap()
@@ -204,6 +208,7 @@ async fn read_to_file() -> PushList {
 // 读取关键词的json文件
 async fn read_keyword() -> Vec<String> {
     let file_path = r".\data\xianbacfun_keyword.json";
+    let _ = fs::create_dir_all(r".\data").await;
     let file = OpenOptions::new()
         .read(true)
         .write(true)

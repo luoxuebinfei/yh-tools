@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "优惠工具箱",
-    "version": "0.0.0"
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -26,22 +26,57 @@
       },
       "window": {
         "all": true
+      },
+      "process": {
+        "relaunch": true
+      },
+      "fs": {
+        "scope": ["$RESOURCE/*"]
+      },
+      "path": {
+        "all": true
+      },
+      "protocol": {
+        "all": true,
+        "asset": true,
+        "assetScope": ["**"]
       }
     },
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "com.tauri.dev",
+      "identifier": "com.tauri.build",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
+      ],
+      "shortDescription": "优惠工具箱",
+      "longDescription": "优惠工具箱是一个使用 Tauri 和 Vue 开发的优惠助手",
+      "windows": {
+        "nsis": {
+          "languages": ["SimpChinese","English"],
+          "displayLanguageSelector": true
+        },
+        "wix": {
+          "language": "zh-CN"
+        },
+        "webviewInstallMode": {
+          "silent": true,
+          "type": "downloadBootstrapper"
+        }
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      },
+      "resources": [
+        "../src/assets/sound/*"
       ]
     },
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; media-src 'self' asset: https://asset.localhost"
     },
     "windows": [
       {

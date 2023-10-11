@@ -1,6 +1,12 @@
 <template>
-  <div class="static rounded-lg" @mouseenter="changeHoverStatus" @mouseleave="changeHoverStatus">
-  <audio src="src\assets\sound\Windows Notify System Generic.wav" autoplay></audio>
+  <div
+    class="static rounded-lg"
+    @mouseenter="changeHoverStatus"
+    @mouseleave="changeHoverStatus"
+  >
+    <!-- <audio src=".\assets\sound\Windows Notify System Generic.wav" autoplay></audio> -->
+    <audio id="my-audio" :src="ad" autoplay></audio>
+    <audio id="my-video" hidden="true" autoplay></audio>
     <div data-tauri-drag-region class="titlebar glass rounded-t-lg">
       <div class="titlebar-button" id="titlebar-close">
         <el-icon><Close /></el-icon>
@@ -10,8 +16,7 @@
       class="w-full fixed rounded-b-lg p-2 main glass"
       @click="closeAndOpenUrl"
     >
-      <div class="text-sm font-semibold truncate ... " v-html="data.title">
-      </div>
+      <div class="text-sm font-semibold truncate ..." v-html="data.title"></div>
       <div class="text-xs font-sm" v-html="data.content"></div>
       <div v-html="msg"></div>
     </div>
@@ -63,9 +68,10 @@ const closeAndOpenUrl = () => {
 
 // 最大最小关闭按钮的事件实现
 onMounted(() => {
-  document
-    .getElementById("titlebar-close")!
-    .addEventListener("click", () => {invoke("change_hover_status", { param: false });appWindow.close()});
+  document.getElementById("titlebar-close")!.addEventListener("click", () => {
+    invoke("change_hover_status", { param: false });
+    appWindow.close();
+  });
   console.log("onMounted------", document.getElementById("titlebar-close"));
 });
 onBeforeMount(() => {
@@ -89,6 +95,20 @@ onBeforeMount(() => {
   };
   listen3();
 });
+
+import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { appDataDir, join } from "@tauri-apps/api/path";
+const ad = ref("");
+const a = async() =>{
+  // const appDataDirPath = await appDataDir();
+  // const filePath = await join(
+  //   appDataDirPath,
+  //   "assets/sound/Windows Notify System Generic.wav"
+  // );
+  const audioUrl = convertFileSrc("src/assets/sound/Windows Notify System Generic.wav");
+  ad.value = "src/assets/sound/Windows Notify System Generic.wav";
+};
+a();
 </script>
 
 <style scoped>
@@ -130,7 +150,7 @@ onBeforeMount(() => {
   overflow: auto;
 }
 .glass {
-  background: rgba(185, 185, 185, 0.8);
+  background: rgba(215, 224, 235, 0.9);
   backdrop-filter: blur(25px);
   /* border-radius: 7px; */
 }

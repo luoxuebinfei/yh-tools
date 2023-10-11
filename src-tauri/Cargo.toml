@@ -1,6 +1,6 @@
 [package]
 name = "yh-tools"
-version = "0.0.0"
+version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -13,7 +13,8 @@ edition = "2021"
 tauri-build = { version = "1.4", features = [] }
 
 [dependencies]
-tauri = { version = "1.4", features = [ "system-tray", "window-all", "notification-all", "http-all", "shell-open"] }
+tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri = { version = "1.4", features = [ "path-all", "protocol-all", "process-relaunch", "system-tray", "window-all", "notification-all", "http-all", "shell-open", "devtools"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 reqwest = { version = "0.11.20", features = ["json"] }
@@ -22,6 +23,7 @@ chrono = "0.4.31"
 window-shadows = "0.2.1"
 rand = "0.8.5"
 futures = "0.3.28"
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
