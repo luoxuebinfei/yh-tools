@@ -4,9 +4,7 @@
     @mouseenter="changeHoverStatus"
     @mouseleave="changeHoverStatus"
   >
-    <!-- <audio src=".\assets\sound\Windows Notify System Generic.wav" autoplay></audio> -->
-    <audio id="my-audio" :src="ad" autoplay></audio>
-    <audio id="my-video" hidden="true" autoplay></audio>
+    <audio autoplay><source type="audio/mpeg" ref="audio"/></audio>
     <div data-tauri-drag-region class="titlebar glass rounded-t-lg">
       <div class="titlebar-button" id="titlebar-close">
         <el-icon><Close /></el-icon>
@@ -96,19 +94,17 @@ onBeforeMount(() => {
   listen3();
 });
 
+// 提示音
 import { convertFileSrc } from "@tauri-apps/api/tauri";
-import { appDataDir, join } from "@tauri-apps/api/path";
-const ad = ref("");
-const a = async() =>{
-  // const appDataDirPath = await appDataDir();
-  // const filePath = await join(
-  //   appDataDirPath,
-  //   "assets/sound/Windows Notify System Generic.wav"
-  // );
-  const audioUrl = convertFileSrc("src/assets/sound/Windows Notify System Generic.wav");
-  ad.value = "src/assets/sound/Windows Notify System Generic.wav";
-};
-a();
+import { resolveResource } from '@tauri-apps/api/path'
+const audio = ref();
+onMounted(async() =>{
+  // 返回打包的资源文件路径，前缀要与 tauri.conf.json > tauri > bundle > resources 中的相同
+  const resourcePath = await resolveResource('../src/assets/sound/Windows Notify System Generic.wav');
+  audio.value.src = await convertFileSrc(resourcePath);
+  audio.value.parentNode.load();
+}
+)
 </script>
 
 <style scoped>

@@ -68,9 +68,6 @@
           "type": "downloadBootstrapper"
         }
       },
-      "appimage": {
-        "bundleMediaFramework": true
-      },
       "resources": [
         "../src/assets/sound/*"
       ]
