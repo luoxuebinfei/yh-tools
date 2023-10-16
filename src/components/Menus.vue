@@ -3,8 +3,7 @@
     class="common-layout h-full static"
     v-if="$router.currentRoute.value.path != '/notify'"
   >
-    <el-container class="fixed w-full h-full
-    ">
+    <el-container class="fixed w-full h-full">
       <el-aside class="h-full w-36">
         <el-menu
           :default-active="activPath"
@@ -13,10 +12,19 @@
           @close="handleClose"
           router
         >
-          <el-menu-item index="/">
-            <el-icon><IconMenu /></el-icon>
-            <span>主页</span>
-          </el-menu-item>
+          <el-sub-menu index="/yh/xianbaoku">
+            <template #title>
+              <el-icon><IconMenu /></el-icon>
+              <span>优惠信息</span>
+            </template>
+            <el-menu-item index="/yh/xianbaoku">
+              <span>线报酷</span>
+            </el-menu-item>
+            <el-sub-menu index="/yh/smzdm">
+              <template #title>什么值得买</template>
+              <el-menu-item index="/yh/smzdm/threeHourHot">三小时热榜</el-menu-item>
+            </el-sub-menu>
+          </el-sub-menu>
           <el-menu-item index="/settings">
             <el-icon><Setting /></el-icon>
             <span>设置</span>
@@ -65,7 +73,6 @@ const restart = async () => {
   await relaunch();
 };
 
-
 // import { useRoute } from "vue-router";
 import { toRaw } from "vue";
 
@@ -73,6 +80,4 @@ const route = useRoute();
 console.log(toRaw(route));
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

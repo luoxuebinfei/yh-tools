@@ -97,7 +97,7 @@ const columns = ref([
     key: "title",
     dataKey: "title",
     title: "标题",
-    width: 470,
+    width: 700,
   },
   {
     key: "comments",

@@ -5,8 +5,7 @@ import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
 import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import "./tailwind.css";
-import router from './router'
-
+import router from "./router";
 
 const app = createApp(App);
 app.use(ElementPlus);

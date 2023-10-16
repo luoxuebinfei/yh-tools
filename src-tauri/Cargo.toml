@@ -1,8 +1,8 @@
 [package]
 name = "yh-tools"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["luoxue"]
 license = ""
 repository = ""
 edition = "2021"
@@ -23,6 +23,16 @@ chrono = "0.4.31"
 window-shadows = "0.2.1"
 rand = "0.8.5"
 futures = "0.3.28"
+windows = { version = "0.51.1", features = [
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
+] }
+regex = "1.10.1"
+scraper = "0.17.1"
 
 
 [features]

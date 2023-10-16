@@ -3,6 +3,7 @@
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
 import Menus from "./components/Menus.vue";
 import Notify_ from "./views/Notify.vue";
+
 </script>
 
 <template>
@@ -11,7 +12,6 @@ import Notify_ from "./views/Notify.vue";
   </div>
   <!-- <div v-else><Notify_ /></div> -->
 </template>
-
 
 <style scoped>
 .logo.vite:hover {

@@ -4,6 +4,7 @@
 mod xianbaofun;
 
 mod tray;
+mod smzdm;
 use tauri::{api::notification::Notification, Manager};
 use tokio::time;
 use xianbaofun::*;
@@ -86,7 +87,9 @@ fn main() {
             xianbaofun::return_keyword,
             xianbaofun::change_keyword,
             notify::change_hover_status,
-            test2
+            test2,
+            smzdm::three_hour_hot::smzdm_3hhot,
+            smzdm::three_hour_hot::smzdm_3hhot_more
         ])
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {

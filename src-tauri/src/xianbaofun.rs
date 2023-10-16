@@ -63,6 +63,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
             };
             println!("{}", Local::now());
             window.emit("listen_data_time", Local::now().timestamp_millis()).unwrap();
+            let mut notify_list = vec![];
             if old_list.is_empty() {
                 window.emit("listen_data", &html).unwrap();
                 old_list = html;
@@ -108,12 +109,15 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                                 .content
                                 .replace(&*i, &format!("<span class=\"text-red-600\">{i}</span>"));
                         }
-
-                        notify::notify(body, app.clone());
+                        notify_list.push(body);
+                        // notify::notify(body, app.clone());
                     }
                 });
                 write_to_file(&html).await;
                 old_list = html;
+            }
+            for i in notify_list {
+                notify::notify(i, app.clone()).await;
             }
             // 睡眠15秒
             time::sleep(time::Duration::from_secs(15)).await;
