@@ -61,21 +61,21 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                     continue;
                 }
             };
-            println!("{}", Local::now());
+            // println!("{}", Local::now());
             window.emit("listen_data_time", Local::now().timestamp_millis()).unwrap();
             let mut notify_list = vec![];
             if old_list.is_empty() {
                 window.emit("listen_data", &html).unwrap();
                 old_list = html;
                 write_to_file(&old_list).await;
-                println!("old_list: {:?}", &old_list);
+                // println!("old_list: {:?}", &old_list);
             } else {
                 // 取差集
                 let minusion = html
                     .iter()
                     .filter(|&u| !old_list.contains(u))
                     .collect::<Vec<_>>();
-                println!("minusion: {:?}", minusion);
+                // println!("minusion: {:?}", minusion);
                 window.emit("listen_data", &minusion).unwrap();
                 let b = read_keyword().await;
                 // 对比消息相似度，如果大于0.8则发送通知
@@ -96,7 +96,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                         .iter()
                         .filter(|x| u.content.contains(&**x))
                         .collect::<Vec<_>>();
-                    println!("filter: {:?}", c);
+                    // println!("filter: {:?}", c);
                     if a > 0 || !c.is_empty() || !d.is_empty() {
                         let mut body = u.clone();
                         for i in c {

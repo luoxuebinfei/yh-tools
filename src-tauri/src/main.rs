@@ -5,8 +5,11 @@ mod xianbaofun;
 
 mod tray;
 mod smzdm;
-use tauri::{api::notification::Notification, Manager};
+
+use chrono::Local;
+use tauri::{api::notification::Notification, async_runtime::block_on};
 use tokio::time;
+use tokio_cron_scheduler::{JobScheduler, Job};
 use xianbaofun::*;
 
 use crate::utils::set_window_shadow;
@@ -58,9 +61,8 @@ async fn create_window(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-async fn test2(app: tauri::AppHandle) {
-    let window_all = app.windows();
-    println!("{:?}", window_all.keys());
+async fn test2(_app: tauri::AppHandle) {
+    print!("test2");
 }
 
 fn main() {
@@ -76,6 +78,7 @@ fn main() {
         }))
         .setup(|app| {
             set_window_shadow(app);
+            let _sched = block_on(initialize_cron_scheduler(app.handle()));
             Ok(())
         })
         .system_tray(tray::menu())
@@ -89,7 +92,9 @@ fn main() {
             notify::change_hover_status,
             test2,
             smzdm::three_hour_hot::smzdm_3hhot,
-            smzdm::three_hour_hot::smzdm_3hhot_more
+            smzdm::three_hour_hot::smzdm_3hhot_more,
+            smzdm::three_hour_hot::return_smzdm_keyword,
+            smzdm::three_hour_hot::change_smzdm_keyword
         ])
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {
@@ -100,4 +105,18 @@ fn main() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+async fn initialize_cron_scheduler(app: tauri::AppHandle){
+    let cron_handler = JobScheduler::new().await.expect("Failed to initialize tokio cron handler");
+    cron_handler.start().await.expect("Failed to start tokio cron handler");
+    let heart_job = Job::new_cron_job("0 0/30 * * * ?",move |_uuid,_i|{
+        let app = app.clone();
+        let task = async move {
+            println!("定时任务：{}", Local::now());
+            smzdm::three_hour_hot::timing_task_smzdm_3hhot(app).await;
+        };
+        tokio::spawn(task);
+    }).unwrap();
+    let _job_id = cron_handler.add(heart_job).await.unwrap();
 }
