@@ -217,24 +217,25 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
             s.article_content = element.text().collect::<String>().trim().to_string();
         }
         // 提取值的数量
-        let selector = Selector::parse("span.z-group-data > a > span.unvoted-wrap > span").unwrap();
+        let selector = Selector::parse("span.z-group-data > a.J_zhi_like_fav > span.unvoted-wrap > span").unwrap();
         for element in element.select(&selector) {
-            s.article_rating = element
-                .text()
-                .collect::<String>()
-                .trim()
-                .parse::<i64>()
-                .unwrap();
+            match element.text().collect::<String>().trim().parse::<i64>() {
+                Ok(num) => {
+                    s.article_rating = num;
+                },
+                Err(_) => {}
+                
+            }
         }
         // 提取评论的数量
         let selector = Selector::parse("a.z-group-data").unwrap();
         for element in element.select(&selector) {
-            s.article_comment = element
-                .text()
-                .collect::<String>()
-                .trim()
-                .parse::<i64>()
-                .unwrap();
+            match element.text().collect::<String>().trim().parse::<i64>() {
+                Ok(num) => {
+                    s.article_comment = num;
+                },
+                Err(_) => {}
+            }
         }
         sl.push(s);
     }
