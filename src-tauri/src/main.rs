@@ -62,7 +62,8 @@ async fn create_window(app: tauri::AppHandle) {
 
 #[tauri::command]
 async fn test2(_app: tauri::AppHandle) {
-    print!("test2");
+    time::sleep(time::Duration::from_secs(5)).await;
+    notify::is_full_screen();
 }
 
 fn main() {

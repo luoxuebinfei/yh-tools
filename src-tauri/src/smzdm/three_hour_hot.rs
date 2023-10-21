@@ -1,4 +1,8 @@
-use std::{fs::{self, OpenOptions}, io::Read};
+use std::{
+    fs::{self, OpenOptions},
+    io::Read,
+    vec,
+};
 
 use regex::Regex;
 use reqwest::header;
@@ -30,6 +34,9 @@ pub struct Smzdm {
     article_comment: i64,         // 评论数量
     zhifa_tag: ZhifaTag,          // 诸如“白菜党”，“新品尝鲜”，“绝对值”等标签
     article_border_style: String, // 符合关键词的边框样式
+    cates_str: String,            // 分类字符串
+    cates: Vec<String>,           // 分类列表
+    brand: String,                // 品牌
 }
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ZhifaTag {
@@ -69,7 +76,7 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
         .await?
         .text()
         .await?;
-    if res == ""{
+    if res == "" {
         return Err("获取三小时热门榜列表失败,遇到机器人检测...".into());
     }
     let document = Html::parse_document(&res);
@@ -99,6 +106,9 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
                 url: String::new(),
             },
             article_border_style: String::new(),
+            cates_str: String::new(),
+            cates: Vec::new(),
+            brand: String::new(),
         };
         // 提取文章图片和商城
         let selector = Selector::parse("div.feed-ver-pic > a").unwrap();
@@ -150,16 +160,6 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
             }
             s.article_title = element.text().collect::<String>().trim().to_string();
         }
-        // 对标题进行关键词匹配
-        let b = read_keyword();
-        b.iter().for_each(|x| {
-            if s.article_title.contains(&*x) {
-                s.article_title = s
-                    .article_title
-                    .replace(&*x, &format!("<span class=\"text-red-600\">{x}</span>"));
-                s.article_border_style = "border: 2px dashed red".to_string();
-            }
-        });
         // 提取价格
         let selector = Selector::parse("div.feed-block-ver > div.z-highlight.z-ellipsis").unwrap();
         for element in element.select(&selector) {
@@ -217,14 +217,15 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
             s.article_content = element.text().collect::<String>().trim().to_string();
         }
         // 提取值的数量
-        let selector = Selector::parse("span.z-group-data > a.J_zhi_like_fav > span.unvoted-wrap > span").unwrap();
+        let selector =
+            Selector::parse("span.z-group-data > a.J_zhi_like_fav > span.unvoted-wrap > span")
+                .unwrap();
         for element in element.select(&selector) {
             match element.text().collect::<String>().trim().parse::<i64>() {
                 Ok(num) => {
                     s.article_rating = num;
-                },
+                }
                 Err(_) => {}
-                
             }
         }
         // 提取评论的数量
@@ -233,10 +234,57 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
             match element.text().collect::<String>().trim().parse::<i64>() {
                 Ok(num) => {
                     s.article_comment = num;
-                },
+                }
                 Err(_) => {}
             }
         }
+        // 提取分类
+        let selector = Selector::parse(
+            "div.feed-link-btn > div.feed-link-btn-inner > a.z-btn, div.feed-link-btn > a.z-btn",
+        )
+        .unwrap();
+        for element in element.select(&selector) {
+            match element.value().attr("onclick") {
+                Some(text) => {
+                    let re = Regex::new(r"gtmAddToCart\(.*?'brand':'(?<brand>.*?)' ,.*?'category':'(?<category>.*?)',.*?\)").unwrap();
+                    let mat = re.captures(&text).unwrap();
+                    match mat.name("brand") {
+                        Some(text) => {
+                            s.brand = text.as_str().to_string();
+                        }
+                        None => {}
+                        
+                    };
+                    match mat.name("category") {
+                        Some(text) => {
+                            s.cates_str = text.as_str().to_string();
+                            s.cates = text.as_str().split("/").map(|x| x.to_string()).collect();
+                        }
+                        None => {}
+                    }
+                }
+                None => {}
+            }
+        }
+        let keyword = read_keyword();
+        // 对标题进行关键词匹配
+        keyword.title.iter().for_each(|x| {
+            if s.article_title.contains(&*x) {
+                s.article_title = s
+                    .article_title
+                    .replace(&*x, &format!("<span class=\"text-red-600\">{x}</span>"));
+                s.article_border_style = "border: 2px dashed red".to_string();
+            }
+        });
+        // 对标签进行关键词匹配
+        keyword.category.iter().for_each(|x| {
+            if s.cates.contains(&*x) || s.brand.contains(&*x) {
+                s.article_title = s
+                    .article_title
+                    .replace(&*x, &format!("<span class=\"text-red-600\">{x}</span>"));
+                s.article_border_style = "border: 2px dashed red".to_string();
+            }
+        });
         sl.push(s);
     }
     return Ok(sl);
@@ -283,7 +331,7 @@ pub async fn get_more_three_hour_hot(
         .await?
         .text()
         .await?;
-    if res == ""{
+    if res == "" {
         return Err("获取三小时热门榜列表失败,遇到机器人检测...".into());
     }
     let v: serde_json::Value = serde_json::from_str(&res)?;
@@ -313,6 +361,9 @@ pub async fn get_more_three_hour_hot(
                 url: String::new(),
             },
             article_border_style: String::new(),
+            cates_str: String::new(),
+            cates: Vec::new(),
+            brand: String::new(),
         };
         s.article_id = i["article_id"].as_i64().unwrap();
         s.article_url = i["article_url"].as_str().unwrap().to_string();
@@ -337,10 +388,23 @@ pub async fn get_more_three_hour_hot(
             s.zhifa_tag.name = i["zhifa_tag"]["name"].as_str().unwrap().to_string();
             s.zhifa_tag.url = i["zhifa_tag"]["url"].as_str().unwrap().to_string();
         }
+        s.brand = i["gtm"]["brand"].as_str().unwrap().to_string();
+        s.cates_str = i["gtm"]["cates_str"].as_str().unwrap().to_string();
+        s.cates = i["gtm"]["cates_str"].as_str().unwrap().to_string().split(",").map(|x| x.to_string()).collect();
+        
+        let keyword = read_keyword();
         // 对标题进行关键词匹配
-        let b = read_keyword();
-        b.iter().for_each(|x| {
+        keyword.title.iter().for_each(|x| {
             if s.article_title.contains(&*x) {
+                s.article_title = s
+                    .article_title
+                    .replace(&*x, &format!("<span class=\"text-red-600\">{x}</span>"));
+                s.article_border_style = "border: 2px dashed red".to_string();
+            }
+        });
+        // 对标签进行关键词匹配
+        keyword.category.iter().for_each(|x| {
+            if s.cates.contains(&*x) || s.brand.contains(&*x) {
                 s.article_title = s
                     .article_title
                     .replace(&*x, &format!("<span class=\"text-red-600\">{x}</span>"));
@@ -367,8 +431,14 @@ fn read_smzdm_cookie() -> String {
     s.trim().to_string()
 }
 
+#[derive(Deserialize,Serialize)]
+pub struct Keyword{
+    title: Vec<String>,
+    category: Vec<String>,
+}
+
 // 读取关键词的json文件
-fn read_keyword() -> Vec<String> {
+fn read_keyword() -> Keyword {
     let file_path = r".\data\smzdm_keyword.json";
     let _ = fs::create_dir_all(r".\data");
     let file = OpenOptions::new()
@@ -381,7 +451,15 @@ fn read_keyword() -> Vec<String> {
         Ok(data) => data,
         Err(e) => {
             if e.is_eof() {
-                vec![]
+                Keyword {
+                    title: Vec::new(),
+                    category: Vec::new(),
+                }
+            } else if e.is_data() {
+                Keyword {
+                    title: Vec::new(),
+                    category: Vec::new(),
+                }
             } else {
                 panic!("{}", e);
             }
@@ -390,7 +468,7 @@ fn read_keyword() -> Vec<String> {
 }
 
 // 写入关键词的json文件
-async fn write_keyword(data: Vec<String>) {
+async fn write_keyword(data: Keyword) {
     let file_path = r".\data\smzdm_keyword.json";
     let _ = tokio::fs::create_dir_all(r".\data").await;
     let file = tokio::fs::OpenOptions::new()
@@ -420,7 +498,9 @@ fn read_filter_item() -> Vec<Smzdm> {
         Err(e) => {
             if e.is_eof() {
                 vec![]
-            } else {
+            } else if e.is_data() {
+                vec![]
+            }else {
                 panic!("{}", e);
             }
         }
@@ -451,7 +531,10 @@ pub async fn timing_task_smzdm_3hhot(app: tauri::AppHandle) {
                 .collect::<Vec<_>>();
             write_filter_item(&b);
             // 使用 contains 方法会造成因评论数和点值数不同导致重复通知同一个商品
-            let c = b.into_iter().filter(|x| !a.iter().any(|y| y.article_id == x.article_id)).collect::<Vec<_>>();
+            let c = b
+                .into_iter()
+                .filter(|x| !a.iter().any(|y| y.article_id == x.article_id))
+                .collect::<Vec<_>>();
             println!("c: {:?}", c);
             println!("c.len: {:?}", c.len());
             if c.len() > 0 {
@@ -488,12 +571,12 @@ pub async fn smzdm_3hhot_more(pagenum: i32) -> Result<SmzdmList, String> {
 
 // 从文件中读取关键词
 #[tauri::command]
-pub async fn return_smzdm_keyword() -> Vec<String> {
+pub async fn return_smzdm_keyword() -> Keyword {
     read_keyword()
 }
 
 // 改变关键词时写入文件
 #[tauri::command]
-pub async fn change_smzdm_keyword(params: Vec<String>) {
+pub async fn change_smzdm_keyword(params: Keyword) {
     write_keyword(params).await;
 }

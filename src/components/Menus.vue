@@ -39,7 +39,7 @@
           </el-menu-item>
         </el-menu>
       </el-aside>
-      <el-main class="bg-gray-50">
+      <el-main class="bg-gray-50 h-full">
         <router-view> </router-view>
       </el-main>
     </el-container>

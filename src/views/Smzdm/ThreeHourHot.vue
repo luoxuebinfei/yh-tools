@@ -1,64 +1,82 @@
 <template>
-  <div class="static">
-    <div class="mb-1 w-full flex justify-end" v-show="isKeywordShow">
-      <el-tooltip
-        class="box-item"
-        effect="dark"
-        content="关键词提醒"
-        placement="top"
-      >
-        <el-button
-          id="keywordBell"
-          class="mb-1"
-          type="primary"
-          :icon="Bell"
-          text
-          @click="change_keyword"
+  <div class="staic h-full overflow-y-hidden">
+    <div class="">
+      <div class="mb-1 w-full flex justify-end" v-show="isKeywordShow">
+        <el-tooltip
+          class="box-item"
+          effect="dark"
+          content="标题关键词提醒"
+          placement="top"
+        >
+          <el-button
+            id="keywordBell"
+            class="mb-1"
+            style="color: rgb(88, 88, 255);"
+            type="primary"
+            :icon="Bell"
+            text
+            @click="change_keyword('title')"
+          />
+        </el-tooltip>
+        <el-tooltip
+          class="box-item"
+          effect="dark"
+          content="品牌 / 品类关键词提醒"
+          placement="top"
+        >
+          <el-button
+            id="keywordBell"
+            class="mb-1"
+            type="primary"
+            :icon="Bell"
+            text
+            @click="change_keyword('category')"
+          />
+        </el-tooltip>
+        <el-tooltip class="" effect="dark" content="刷新页面" placement="top">
+          <el-button
+            class=""
+            type="primary"
+            :icon="Refresh"
+            text
+            @click="refreshPage"
+          />
+        </el-tooltip>
+      </div>
+      <div class="mb-4" v-show="!isKeywordShow">
+        <el-tag
+          v-for="tag in dynamicTags"
+          :key="tag"
+          class="mx-1"
+          closable
+          :disable-transitions="false"
+          @close="handleClose(tag)"
+        >
+          {{ tag }}
+        </el-tag>
+        <el-input
+          v-if="inputVisible"
+          ref="InputRef"
+          v-model="inputValue"
+          class="ml-1 w-20"
+          size="small"
+          @keyup.enter="handleInputConfirm"
+          @blur="handleInputConfirm"
         />
-      </el-tooltip>
-      <el-tooltip class="" effect="dark" content="刷新页面" placement="top">
         <el-button
-          class=""
-          type="primary"
-          :icon="Refresh"
-          text
-          @click="refreshPage"
-        />
-      </el-tooltip>
+          v-else
+          class="button-new-tag ml-1"
+          size="small"
+          @click="showInput"
+        >
+          + 关键词
+        </el-button>
+        <el-button @click="change_keyword" :icon="ArrowUp" size="small" text
+          >收起</el-button
+        >
+      </div>
     </div>
-    <div class="mb-4" v-show="!isKeywordShow">
-      <el-tag
-        v-for="tag in dynamicTags"
-        :key="tag"
-        class="mx-1"
-        closable
-        :disable-transitions="false"
-        @close="handleClose(tag)"
-      >
-        {{ tag }}
-      </el-tag>
-      <el-input
-        v-if="inputVisible"
-        ref="InputRef"
-        v-model="inputValue"
-        class="ml-1 w-20"
-        size="small"
-        @keyup.enter="handleInputConfirm"
-        @blur="handleInputConfirm"
-      />
-      <el-button
-        v-else
-        class="button-new-tag ml-1"
-        size="small"
-        @click="showInput"
-      >
-        + 关键词
-      </el-button>
-      <el-button @click="change_keyword" :icon="ArrowUp" size="small" text
-        >收起</el-button
-      >
-    </div>
-    <div class="relative">
+    <div class="relative overflow-x-hidden feed-list" style="height: 94%">
       <el-row
         :gutter="10"
         class="bg-neutral-100"
@@ -183,7 +201,13 @@
         ></el-col>
       </el-row>
     </div>
+    <!-- 回到顶部 -->
+    <!-- <div class="sticky-right">
+      <div class=""><el-button type="primary" class="bg-blue-500" @click="backtop" :icon="ArrowUpBold" circle /></div>
+    </div> -->
+    <el-backtop :right="80" :bottom="100" target=".feed-list" class="" />
   </div>
+
   <el-dialog
     v-model="dialogVisible"
     title="错误"
@@ -195,7 +219,8 @@
         href="https://faxian.smzdm.com/h2s0t0f0c1p1/"
         class="text-sky-600"
         target="_blank"
-        > 什么值得买 </a
+      >
+        什么值得买 </a
       >中手动获取<span class="font-semibold"> cookies </span
       >填入应用安装目录下的<span class="text-red-500">
         data/smzdm_cookies.txt </span
@@ -213,7 +238,7 @@
 <script lang="ts" setup>
 import { invoke } from "@tauri-apps/api/tauri";
 import { nextTick, onMounted, ref } from "vue";
-import { Refresh, Bell, ArrowUp } from "@element-plus/icons-vue";
+import { Refresh, Bell, ArrowUp, ArrowUpBold } from "@element-plus/icons-vue";
 import { ElInput, ElMessageBox } from "element-plus";
 
 const smzdm_list = ref<Smzdm_interface[]>([]);
@@ -279,26 +304,42 @@ const refreshPage = () => {
 };
 
 // 关键词相关控件
+export interface Keyword {
+  title: string[];
+  category: string[];
+}
+const keywordStatus = ref(""); //切换关键词
+const keywordTags = ref<Keyword>({
+  title: [],
+  category: [],
+}); // 存储获取的关键词
 const isKeywordShow = ref(true);
-const dynamicTags = ref([""]);
+const dynamicTags = ref([""]); // 展示的关键词
 const inputVisible = ref(false);
 const inputValue = ref("");
 const InputRef = ref<InstanceType<typeof ElInput>>();
-const change_keyword = () => {
+const change_keyword = (e) => {
+  console.log(e);
+  // 获取点击的是哪个按钮标签
+  keywordStatus.value = e;
+  // 将点击的关键词展示
+  dynamicTags.value = keywordTags.value[e];
   isKeywordShow.value = !isKeywordShow.value;
 };
 // 获取关键词
 const getKeyword = () => {
   invoke("return_smzdm_keyword").then((res) => {
     console.log(res);
-    dynamicTags.value = res as string[];
+    keywordTags.value = res as Keyword;
+    // dynamicTags.value = res as string[];
   });
 };
 getKeyword();
 
 const handleClose = (tag: string) => {
   dynamicTags.value.splice(dynamicTags.value.indexOf(tag), 1);
-  invoke("change_smzdm_keyword", { params: dynamicTags.value });
+  keywordTags.value[keywordStatus.value] = dynamicTags.value;
+  invoke("change_smzdm_keyword", { params: keywordTags.value });
 };
 
 const showInput = () => {
@@ -311,7 +352,8 @@ const showInput = () => {
 const handleInputConfirm = () => {
   if (inputValue.value) {
     dynamicTags.value.push(inputValue.value);
-    invoke("change_smzdm_keyword", { params: dynamicTags.value });
+    keywordTags.value[keywordStatus.value] = dynamicTags.value;
+    invoke("change_smzdm_keyword", { params: keywordTags.value });
   }
   inputVisible.value = false;
   inputValue.value = "";
@@ -385,5 +427,12 @@ a.z-avatar-pic {
   height: 20px;
   text-align: center;
   margin-right: 5px;
+}
+/* 右侧悬浮按钮 */
+.sticky-right {
+  position: fixed;
+  right: 30px;
+  bottom: 20px;
+  z-index: 100;
 }
 </style>

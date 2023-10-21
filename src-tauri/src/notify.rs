@@ -85,7 +85,6 @@ pub fn is_full_screen() -> bool {
         GetWindowInfo(h, &mut info).unwrap();
         let w = GetSystemMetrics(SM_CXSCREEN); // 屏幕的宽
         let h = GetSystemMetrics(SM_CYSCREEN); // 屏幕的高
-        
         if info.rcWindow.left == 0 && info.rcWindow.top == 0 && info.rcWindow.right == w && info.rcWindow.bottom == h {
             println!("{}: 全屏占用", text);
             return true;
