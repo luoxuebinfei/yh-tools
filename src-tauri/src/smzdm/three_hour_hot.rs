@@ -7,42 +7,9 @@ use std::{
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
-use serde::{Deserialize, Serialize};
+use crate::smzdm::smzdm_struct::*;
 // use tokio::fs::{self, OpenOptions};
 
-pub type SmzdmList = Vec<Smzdm>;
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct Smzdm {
-    article_id: i64,              // 文章id
-    article_url: String,          // 文章url
-    article_pic_url: String,      // 图片url
-    article_pic_style: String,    // 图片样式
-    article_title: String,        // 文章标题
-    article_price: String,        // 价格
-    article_referrals: String,    // 作者
-    article_avatar: String,       // 作者头像url
-    article_avatar_url: String,   // 作者主页url
-    article_display_date: String, // 发布时间
-    article_date: String,         // 发布时间
-    article_content: String,      // 内容
-    article_yh_type: String,      // 优惠类型
-    article_mall: String,         // 商城
-    article_mall_url: String,     // 商城url
-    article_link: String,         // 链接
-    article_rating: i64,          // “值”的数量
-    article_comment: i64,         // 评论数量
-    zhifa_tag: ZhifaTag,          // 诸如“白菜党”，“新品尝鲜”，“绝对值”等标签
-    article_border_style: String, // 符合关键词的边框样式
-    cates_str: String,            // 分类字符串
-    cates: Vec<String>,           // 分类列表
-    brand: String,                // 品牌
-}
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct ZhifaTag {
-    name: String,
-    url: String,
-}
 
 // 获取三小时热门榜列表
 async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Error>> {
@@ -100,6 +67,8 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
             article_mall_url: String::new(),
             article_link: String::new(),
             article_rating: 0,
+            article_rating_down: 0,
+            article_collect: 0,
             article_comment: 0,
             zhifa_tag: ZhifaTag {
                 name: String::new(),
@@ -355,6 +324,8 @@ pub async fn get_more_three_hour_hot(
             article_mall_url: String::new(),
             article_link: String::new(),
             article_rating: 0,
+            article_rating_down: 0,
+            article_collect: 0,
             article_comment: 0,
             zhifa_tag: ZhifaTag {
                 name: String::new(),
@@ -417,7 +388,7 @@ pub async fn get_more_three_hour_hot(
 }
 
 // 读取cookies文件
-fn read_smzdm_cookie() -> String {
+pub fn read_smzdm_cookie() -> String {
     let file_path = r".\data\smzdm_cookies.txt";
     let _ = fs::create_dir_all(r".\data");
     let mut file = OpenOptions::new()
@@ -431,11 +402,6 @@ fn read_smzdm_cookie() -> String {
     s.trim().to_string()
 }
 
-#[derive(Deserialize,Serialize)]
-pub struct Keyword{
-    title: Vec<String>,
-    category: Vec<String>,
-}
 
 // 读取关键词的json文件
 fn read_keyword() -> Keyword {

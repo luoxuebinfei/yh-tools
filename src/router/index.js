@@ -10,6 +10,7 @@ import Xianbaoku from "../views/Xianbaoku.vue";
 import Settings from "../views/Setting.vue";
 import Notify from "../views/Notify.vue";
 import ThreeHourHot from "../views/Smzdm/ThreeHourHot.vue";
+import SearchKeyword from "../views/Smzdm/Search.vue";
 
 const router = createRouter({
   // history: createWebHashHistory(),  // hash 模式
@@ -25,6 +26,20 @@ const router = createRouter({
           component: Xianbaoku,
           meta: {
             title: "线报库",
+          },
+        },
+        {
+          path: "/yh/smzdm/search",
+          name: "search",
+          component: SearchKeyword,
+          meta: {
+            title: "搜索",
+            data:[
+              {
+                name:"referrer",
+                content:"no-referrer"
+              }
+            ]
           },
         },
         {

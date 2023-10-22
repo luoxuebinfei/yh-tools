@@ -22,6 +22,7 @@
             </el-menu-item>
             <el-sub-menu index="/yh/smzdm">
               <template #title>什么值得买</template>
+              <el-menu-item index="/yh/smzdm/search">搜索</el-menu-item>
               <el-menu-item index="/yh/smzdm/threeHourHot">三小时热榜</el-menu-item>
             </el-sub-menu>
           </el-sub-menu>

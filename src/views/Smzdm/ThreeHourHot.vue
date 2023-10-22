@@ -201,11 +201,7 @@
         ></el-col>
       </el-row>
     </div>
-    <!-- 回到顶部 -->
-    <!-- <div class="sticky-right">
-      <div class=""><el-button type="primary" class="bg-blue-500" @click="backtop" :icon="ArrowUpBold" circle /></div>
-    </div> -->
-    <el-backtop :right="80" :bottom="100" target=".feed-list" class="" />
+    <el-backtop :right="50" :bottom="50" target=".feed-list" class="" />
   </div>
 
   <el-dialog

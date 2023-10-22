@@ -62,8 +62,17 @@ async fn create_window(app: tauri::AppHandle) {
 
 #[tauri::command]
 async fn test2(_app: tauri::AppHandle) {
-    time::sleep(time::Duration::from_secs(5)).await;
-    notify::is_full_screen();
+    // time::sleep(time::Duration::from_secs(5)).await;
+    // notify::is_full_screen();
+    let a = smzdm::search::search_keyword("可乐".to_string()).await;
+    match a {
+        Ok(sl) => {
+            println!("{:?}", sl);
+        },
+        Err(e) => {
+            println!("{:?}", e);
+        }
+    }
 }
 
 fn main() {
@@ -95,7 +104,8 @@ fn main() {
             smzdm::three_hour_hot::smzdm_3hhot,
             smzdm::three_hour_hot::smzdm_3hhot_more,
             smzdm::three_hour_hot::return_smzdm_keyword,
-            smzdm::three_hour_hot::change_smzdm_keyword
+            smzdm::three_hour_hot::change_smzdm_keyword,
+            smzdm::search::smzdm_search
         ])
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {
