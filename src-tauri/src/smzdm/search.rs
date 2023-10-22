@@ -1,6 +1,7 @@
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
+use urlencoding::encode;
 
 use super::smzdm_struct::*;
 use super::three_hour_hot::read_smzdm_cookie;
@@ -23,7 +24,7 @@ pub async fn search_keyword(keyword: String) -> Result<Vec<Smzdm>, Box<dyn std::
     headers.insert("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67".parse().unwrap());
 
     let mut sl = SmzdmList::new();
-
+    let keyword = encode(&keyword).to_string();
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .build()

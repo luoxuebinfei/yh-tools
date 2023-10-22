@@ -85,7 +85,7 @@
                     <div class="z-feed-foot-r float-right text-sm">
                       <span class="feed-block-extras">
                         {{ i.article_date }}
-                        <span>{{ i.article_mall }}</span>
+                        <span class="ml-2">{{ i.article_mall }}</span>
                       </span>
                       <div class="feed-link-btn inline-block relative ml-5">
                         <!-- app扫码 -->
