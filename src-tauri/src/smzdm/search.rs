@@ -1,12 +1,17 @@
+use chrono::{Local, NaiveDateTime, TimeZone};
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
+use std::io::Write;
 use urlencoding::encode;
 
 use super::smzdm_struct::*;
 use super::three_hour_hot::read_smzdm_cookie;
 
-pub async fn search_keyword(keyword: String) -> Result<Vec<Smzdm>, Box<dyn std::error::Error>> {
+pub async fn search_keyword(
+    keyword: String,
+    is_zhi: bool,
+) -> Result<Vec<Smzdm>, Box<dyn std::error::Error>> {
     let mut headers = header::HeaderMap::new();
     // 读取cookie
     headers.insert(header::COOKIE, read_smzdm_cookie().parse().unwrap());
@@ -29,11 +34,18 @@ pub async fn search_keyword(keyword: String) -> Result<Vec<Smzdm>, Box<dyn std::
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .unwrap();
-    let res = client
-        .get(format!("https://search.smzdm.com/?c=faxian&s={}&order=score&f_c=zhi", keyword))
-        .headers(headers)
-        .send()
-        .await?;
+    let url = if is_zhi {
+        format!(
+            "https://search.smzdm.com/?c=faxian&s={}&order=score&f_c=zhi",
+            keyword
+        )
+    } else {
+        format!(
+            "https://search.smzdm.com/?c=faxian&s={}&order=score",
+            keyword
+        )
+    };
+    let res = client.get(url).headers(headers).send().await?;
     if res.status() != 200 {
         return Err(format!(r#"{{"status":{}}}"#, res.status().as_u16()).into());
     };
@@ -70,10 +82,16 @@ pub async fn search_keyword(keyword: String) -> Result<Vec<Smzdm>, Box<dyn std::
             cates: Vec::new(),
             brand: String::new(),
         };
+        // 提取优惠类型
+        let selector = Selector::parse("div.z-feed-img > span").unwrap();
+        for element in element.select(&selector) {
+            s.article_yh_type = element.text().collect::<String>().trim().to_string();
+        }
         // 提取图片url
         let selector = Selector::parse("div.z-feed-img > a > img").unwrap();
         for element in element.select(&selector) {
-            s.article_pic_url = format!("https:{}",element.value().attr("src").unwrap().to_string());
+            s.article_pic_url =
+                format!("https:{}", element.value().attr("src").unwrap().to_string());
         }
         // 提取标题、价格和id
         let selector = Selector::parse("h5.feed-block-title").unwrap();
@@ -187,7 +205,7 @@ pub async fn search_keyword(keyword: String) -> Result<Vec<Smzdm>, Box<dyn std::
                                 }
                                 None => {}
                             }
-                        },
+                        }
                         None => {}
                     }
                 }
@@ -196,13 +214,65 @@ pub async fn search_keyword(keyword: String) -> Result<Vec<Smzdm>, Box<dyn std::
         }
         sl.push(s);
     }
+    determine_result(&sl);
     Ok(sl)
 }
 
+fn determine_result(sl: &Vec<Smzdm>) {
+    // 当前时间
+    let now = Local::now().timestamp();
+    // 定义初始权重
+    let mut weight = 0;
+    for (index, value) in sl.iter().enumerate() {
+        if value.article_yh_type == "过期" || value.article_yh_type == "售罄" {
+            weight += 5;
+            weight = weight + (20 - index); // 根据排名加权
+            let formats = ["%Y-%m-%d", "%m-%d %H:%M", "%H:%M"];
+
+            for format in formats.iter() {
+                if let Ok(dt) = NaiveDateTime::parse_from_str(value.article_date.as_str(), *format)
+                {
+                    if let Some(local_dt) = Local.from_local_datetime(&dt).single() {
+                        let diff = now - local_dt.timestamp();
+                        if diff < 432000 {
+                            // 小于5天
+                            weight += 5;
+                        } else if diff < 864000 {
+                            // 小于10天
+                            weight += 10;
+                        } else {
+                            // 大于10天
+                            weight += 20;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    println!("权重: {}", weight);
+}
+
 #[tauri::command]
-pub async fn smzdm_search(keyword: String) -> Result<Vec<Smzdm>, String> {
-    match search_keyword(keyword).await{
+pub async fn smzdm_search(keyword: String, iszhi: bool) -> Result<Vec<Smzdm>, String> {
+    match search_keyword(keyword, iszhi).await {
         Ok(sl) => Ok(sl),
         Err(e) => Err(e.to_string()),
     }
+}
+
+#[tauri::command]
+pub async fn smzdm_write_cookies(cookies: String) -> Result<(), String> {
+    let file_path = r".\data\smzdm_cookies.txt";
+    let _ = tokio::fs::create_dir_all(r".\data").await;
+    let mut file = tokio::fs::OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(file_path)
+        .await
+        .unwrap()
+        .into_std()
+        .await;
+    write!(file, "{}", cookies).unwrap();
+    Ok(())
 }

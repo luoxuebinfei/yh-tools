@@ -17,6 +17,22 @@
         :name="item.name"
         :lazy="true"
       >
+        <template #label>
+          <span>
+            {{ item.title }}
+            <span @click="chageZhi(item.name)">
+              <el-tooltip
+                class="box-item"
+                effect="dark"
+                :content="switchStatus ? '值率≥50%' : '默认'"
+                placement="top"
+              >
+                <el-icon style="vertical-align: -15%"
+                  ><Switch
+                /></el-icon> </el-tooltip
+            ></span>
+          </span>
+        </template>
         <div class="bg-white h-full">
           <ul class="h-full">
             <li
@@ -26,13 +42,30 @@
             >
               <div>
                 <div class="z-feed-img">
+                  <span
+                    class="absolute text-sm h-5 px-1 rounded-r-md bg-red-500 text-white"
+                    :class="{
+                      'bg-gray-300':
+                        i.article_yh_type === '过期' ||
+                        i.article_yh_type === '售罄',
+                      'bg-emerald-500': i.article_yh_type === '好价频道',
+                    }"
+                    >{{ i.article_yh_type }}</span
+                  >
                   <a :href="i.article_url" target="_blank"
                     ><!-- 文章图片 -->
                     <img :src="i.article_pic_url" :alt="i.article_title"
                   /></a>
                 </div>
                 <div class="z-feed-content">
-                  <h5 class="feed-block-title text-lg truncate">
+                  <h5
+                    class="feed-block-title text-lg truncate"
+                    :class="{
+                      'text-gray-300':
+                        i.article_yh_type === '过期' ||
+                        i.article_yh_type === '售罄',
+                    }"
+                  >
                     <!-- 文章标题 -->
                     <a
                       class="inline"
@@ -44,6 +77,11 @@
                     <!-- 价格 -->
                     <a
                       class="inline-block text-red-600"
+                      :class="{
+                        'text-gray-300':
+                          i.article_yh_type === '过期' ||
+                          i.article_yh_type === '售罄',
+                      }"
                       :href="i.article_url"
                       :title="i.article_price"
                       target="_blank"
@@ -51,7 +89,7 @@
                     >
                   </h5>
                   <div
-                    class="feed-block-descripe-top truncate text-sm text-gray-600"
+                    class="feed-block-descripe-top truncate text-sm text-gray-500"
                   >
                     <!-- 内容 -->
                     {{ i.article_content }}
@@ -133,11 +171,12 @@
         target="_blank"
       >
         什么值得买 </a
-      >中获取<span class="font-semibold"> cookies </span
-      >填入应用安装目录下的<span class="text-red-500">
-        data/smzdm_cookies.txt </span
-      >中</span
-    >
+      >中获取<span class="font-semibold"> cookies </span>填入下方输入框中
+      <el-input
+        v-model="cookiesInput"
+        placeholder="请填入新的cookies"
+        clearable
+    /></span>
     <template #footer>
       <span class="dialog-footer">
         <el-button class="bg-blue-500" type="primary" @click="dialogEvent">
@@ -152,6 +191,7 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { ElMessageBox, TabPaneName } from "element-plus";
 import { ref } from "vue";
+import { Switch } from "@element-plus/icons-vue";
 
 export interface Smzdm_interface {
   article_id: number; //文章id
@@ -185,8 +225,8 @@ export interface ZhifaTag {
 //获取数据
 const searchData = ref<Smzdm_interface[]>();
 const json_err = ref();
-const getData = (item) => {
-  invoke("smzdm_search", { keyword: item })
+const getData = (item,status) => {
+  invoke("smzdm_search", { keyword: item, iszhi: status })
     .then((res) => {
       searchData.value = res as Smzdm_interface[];
     })
@@ -273,15 +313,17 @@ const handleTabsEdit = (
 // 标签页点击事件
 const tabClick = (tab) => {
   searchData.value = [];
-  getData(tab.props.name);
+  getData(tab.props.name,switchStatus.value);
 };
 
 // 错误提示框
 const dialogVisible = ref(false);
+const cookiesInput = ref("");
 
 const dialogHandleClose = (done: () => void) => {
   ElMessageBox.confirm("确定关闭?")
     .then(() => {
+      invoke("smzdm_write_cookies", { cookies: cookiesInput.value });
       location.reload();
     })
     .catch(() => {
@@ -290,7 +332,16 @@ const dialogHandleClose = (done: () => void) => {
 };
 const dialogEvent = () => {
   dialogVisible.value = true;
+  invoke("smzdm_write_cookies", { cookies: cookiesInput.value });
   location.reload();
+};
+
+// 切换是否设置筛选>50%值的选项
+const switchStatus = ref(true);
+const chageZhi = (item) => {
+  console.log(item);
+  switchStatus.value = !switchStatus.value;
+  getData(item, switchStatus.value);
 };
 </script>
 

@@ -218,9 +218,8 @@
       >
         什么值得买 </a
       >中手动获取<span class="font-semibold"> cookies </span
-      >填入应用安装目录下的<span class="text-red-500">
-        data/smzdm_cookies.txt </span
-      >中</span
+      >填入下方输入框中
+      <el-input v-model="cookiesInput" placeholder="请填入新的cookies" clearable /></span
     >
     <template #footer>
       <span class="dialog-footer">
@@ -366,10 +365,12 @@ const outQrcodeStatus = (e) => {
 
 // 错误提示框
 const dialogVisible = ref(false);
+const cookiesInput = ref("");
 
 const dialogHandleClose = (done: () => void) => {
   ElMessageBox.confirm("确定关闭?")
     .then(() => {
+      invoke("smzdm_write_cookies", { cookies: cookiesInput.value });
       location.reload();
     })
     .catch(() => {
@@ -378,6 +379,7 @@ const dialogHandleClose = (done: () => void) => {
 };
 const dialogEvent = () => {
   dialogVisible.value = true;
+  invoke("smzdm_write_cookies", { cookies: cookiesInput.value });
   location.reload();
 };
 </script>
