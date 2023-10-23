@@ -361,7 +361,7 @@ pub async fn get_more_three_hour_hot(
         }
         s.brand = i["gtm"]["brand"].as_str().unwrap().to_string();
         s.cates_str = i["gtm"]["cates_str"].as_str().unwrap().to_string();
-        s.cates = i["gtm"]["cates_str"].as_str().unwrap().to_string().split(",").map(|x| x.to_string()).collect();
+        s.cates = i["gtm"]["cates_str"].as_str().unwrap().to_string().split("/").map(|x| x.to_string()).collect();
         
         let keyword = read_keyword();
         // 对标题进行关键词匹配
