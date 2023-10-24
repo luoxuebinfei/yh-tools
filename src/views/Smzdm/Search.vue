@@ -82,7 +82,7 @@
                         'text-gray-300':
                           i.article_yh_type === '过期' ||
                           i.article_yh_type === '售罄',
-                        'text-red-600': !(['过期', '售罄', '好价频道'].includes(i.article_yh_type)),
+                        'text-red-600': !(['过期', '售罄'].includes(i.article_yh_type)),
                       }"
                       :href="i.article_url"
                       :title="i.article_price"

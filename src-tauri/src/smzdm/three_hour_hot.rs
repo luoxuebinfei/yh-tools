@@ -4,12 +4,11 @@ use std::{
     vec,
 };
 
+use crate::smzdm::smzdm_struct::*;
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
-use crate::smzdm::smzdm_struct::*;
 // use tokio::fs::{self, OpenOptions};
-
 
 // 获取三小时热门榜列表
 async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Error>> {
@@ -31,6 +30,7 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
     headers.insert("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67".parse().unwrap());
 
     let mut sl = SmzdmList::new();
+    let header1 = headers.clone();
 
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -222,7 +222,6 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
                             s.brand = text.as_str().to_string();
                         }
                         None => {}
-                        
                     };
                     match mat.name("category") {
                         Some(text) => {
@@ -233,6 +232,38 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
                     }
                 }
                 None => {}
+            }
+        }
+        if s.cates.is_empty() {
+            let client = reqwest::blocking::Client::new();
+            let res = client
+                .get(s.article_url.clone())
+                .headers(header1.clone())
+                .send()?
+                .text()?;
+            let document = Html::parse_document(&res);
+            let selector = Selector::parse("div.btn-group.J_btn_group > a.go-buy.btn").unwrap();
+            for element in document.select(&selector) {
+                match element.value().attr("onclick") {
+                    Some(text) => {
+                        let re = Regex::new(r"gtmAddToCart\(.*?'brand':'(?<brand>.*?)' ,.*?'category':'(?<category>.*?)',.*?\)").unwrap();
+                        let mat = re.captures(&text).unwrap();
+                        match mat.name("brand") {
+                            Some(text) => {
+                                s.brand = text.as_str().to_string();
+                            }
+                            None => {}
+                        };
+                        match mat.name("category") {
+                            Some(text) => {
+                                s.cates_str = text.as_str().to_string();
+                                s.cates = text.as_str().split("/").map(|x| x.to_string()).collect();
+                            }
+                            None => {}
+                        }
+                    }
+                    None => {}
+                }
             }
         }
         let keyword = read_keyword();
@@ -361,8 +392,13 @@ pub async fn get_more_three_hour_hot(
         }
         s.brand = i["gtm"]["brand"].as_str().unwrap().to_string();
         s.cates_str = i["gtm"]["cates_str"].as_str().unwrap().to_string();
-        s.cates = i["gtm"]["cates_str"].as_str().unwrap().to_string().split("/").map(|x| x.to_string()).collect();
-        
+        s.cates = i["gtm"]["cates_str"]
+            .as_str()
+            .unwrap()
+            .to_string()
+            .split("/")
+            .map(|x| x.to_string())
+            .collect();
         let keyword = read_keyword();
         // 对标题进行关键词匹配
         keyword.title.iter().for_each(|x| {
@@ -401,7 +437,6 @@ pub fn read_smzdm_cookie() -> String {
     file.read_to_string(&mut s).unwrap();
     s.trim().to_string()
 }
-
 
 // 读取关键词的json文件
 fn read_keyword() -> Keyword {
@@ -466,7 +501,7 @@ fn read_filter_item() -> Vec<Smzdm> {
                 vec![]
             } else if e.is_data() {
                 vec![]
-            }else {
+            } else {
                 panic!("{}", e);
             }
         }
