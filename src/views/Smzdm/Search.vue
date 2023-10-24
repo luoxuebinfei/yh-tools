@@ -43,13 +43,14 @@
               <div>
                 <div class="z-feed-img">
                   <span
-                    class="absolute text-sm h-5 px-1 rounded-r-md bg-red-500 text-white"
                     :class="{
                       'bg-gray-300':
                         i.article_yh_type === '过期' ||
                         i.article_yh_type === '售罄',
                       'bg-emerald-500': i.article_yh_type === '好价频道',
+                      'bg-red-500': !(['过期', '售罄', '好价频道'].includes(i.article_yh_type)),
                     }"
+                    class="absolute text-sm h-5 px-1 rounded-r-md  text-white"
                     >{{ i.article_yh_type }}</span
                   >
                   <a :href="i.article_url" target="_blank"
@@ -76,11 +77,12 @@
                     /></a>
                     <!-- 价格 -->
                     <a
-                      class="inline-block text-red-600"
+                      class="inline-block"
                       :class="{
                         'text-gray-300':
                           i.article_yh_type === '过期' ||
                           i.article_yh_type === '售罄',
+                        'text-red-600': !(['过期', '售罄', '好价频道'].includes(i.article_yh_type)),
                       }"
                       :href="i.article_url"
                       :title="i.article_price"
@@ -225,7 +227,7 @@ export interface ZhifaTag {
 //获取数据
 const searchData = ref<Smzdm_interface[]>();
 const json_err = ref();
-const getData = (item,status) => {
+const getData = (item, status) => {
   invoke("smzdm_search", { keyword: item, iszhi: status })
     .then((res) => {
       searchData.value = res as Smzdm_interface[];
@@ -313,7 +315,7 @@ const handleTabsEdit = (
 // 标签页点击事件
 const tabClick = (tab) => {
   searchData.value = [];
-  getData(tab.props.name,switchStatus.value);
+  getData(tab.props.name, switchStatus.value);
 };
 
 // 错误提示框
