@@ -215,7 +215,8 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
         for element in element.select(&selector) {
             match element.value().attr("onclick") {
                 Some(text) => {
-                    let re = Regex::new(r"gtmAddToCart\(.*?'brand':'(?<brand>.*?)' ,.*?'category':'(?<category>.*?)',.*?\)").unwrap();
+                    println!("{}", text);
+                    let re = Regex::new(r"gtmAddToCart\((?:.|\n)*?'brand':'(?<brand>.*?)' ?,(?:.|\n)*?'category':'(?<category>.*?)',(?:.|\n)*?\)").unwrap();
                     let mat = re.captures(&text).unwrap();
                     match mat.name("brand") {
                         Some(text) => {
@@ -246,7 +247,7 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
             for element in document.select(&selector) {
                 match element.value().attr("onclick") {
                     Some(text) => {
-                        let re = Regex::new(r"gtmAddToCart\(.*?'brand':'(?<brand>.*?)' ,.*?'category':'(?<category>.*?)',.*?\)").unwrap();
+                        let re = Regex::new(r"gtmAddToCart\((?:.|\n)*?'brand':'(?<brand>.*?)' ?,(?:.|\n)*?'category':'(?<category>.*?)',(?:.|\n)*?\)").unwrap();
                         let mat = re.captures(&text).unwrap();
                         match mat.name("brand") {
                             Some(text) => {

@@ -188,7 +188,7 @@ pub async fn search_keyword(
             match element.value().attr("onclick") {
                 Some(text) => {
                     // println!("onclick: {}", text);
-                    let re = Regex::new(r";gtmAddToCart\(.*?'brand':'(?<brand>.*?)',.*?'category':'(?<category>.*?)',.*?\)").unwrap();
+                    let re = Regex::new(r";gtmAddToCart\((?:.|\n)*?'brand':'(?<brand>.*?)' ?,(?:.|\n)*?'category':'(?<category>.*?)',(?:.|\n)*?\)").unwrap();
                     match re.captures(&text) {
                         Some(mat) => {
                             match mat.name("brand") {
