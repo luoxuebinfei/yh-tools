@@ -6,10 +6,14 @@ mod xianbaofun;
 mod tray;
 mod smzdm;
 
+use std::io;
+
 use chrono::Local;
 use tauri::{api::notification::Notification, async_runtime::block_on};
 use tokio::time;
 use tokio_cron_scheduler::{JobScheduler, Job};
+use tracing::Level;
+use tracing_subscriber::fmt::{time::FormatTime, format::Writer};
 use xianbaofun::*;
 
 use crate::utils::set_window_shadow;
@@ -75,7 +79,37 @@ async fn test2(_app: tauri::AppHandle) {
     }
 }
 
+// 用来格式化日志的输出时间格式
+struct LocalTimer;
+
+impl FormatTime for LocalTimer {
+    fn format_time(&self, w: &mut Writer<'_>) -> std::fmt::Result {
+        write!(w, "{}", Local::now().format("%FT%T%.3f"))
+    }
+}
+
 fn main() {
+    let file_appender = tracing_appender::rolling::daily("./logs", "tracing.log");
+    // 定义日志文件滚动策略，将文件名中的日期放在后面
+    
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+    // 设置日志输出时的格式，例如，是否包含日志级别、是否包含日志来源位置、设置日志的时间格式
+    // 参考: https://docs.rs/tracing-subscriber/0.3.3/tracing_subscriber/fmt/struct.SubscriberBuilder.html#method.with_timer
+    let format = tracing_subscriber::fmt::format()
+        .with_level(true)
+        .with_target(true)
+        .with_timer(LocalTimer);
+
+    // 初始化并设置日志格式(定制和筛选日志)
+    tracing_subscriber::fmt()
+        .with_max_level(Level::INFO)
+        .with_writer(io::stdout) // 写入标准输出
+        .with_writer(non_blocking) // 写入文件，将覆盖上面的标准输出
+        .with_ansi(false) // 如果日志是写入文件，应将ansi的颜色输出功能关掉
+        .event_format(format)
+        .init(); // 初始化并将SubScriber设置为全局SubScriber
+
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, cwd| {
             // 防止重复运行程序
@@ -107,6 +141,8 @@ fn main() {
             smzdm::three_hour_hot::change_smzdm_keyword,
             smzdm::search::smzdm_search,
             smzdm::search::smzdm_write_cookies,
+            smzdm::monitoring::get_monitor_list,
+            smzdm::monitoring::edit_monitor,
         ])
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {
@@ -122,8 +158,9 @@ fn main() {
 async fn initialize_cron_scheduler(app: tauri::AppHandle){
     let cron_handler = JobScheduler::new().await.expect("Failed to initialize tokio cron handler");
     cron_handler.start().await.expect("Failed to start tokio cron handler");
+    let app1 = app.clone();
     let heart_job = Job::new_cron_job("0 0/30 * * * ?",move |_uuid,_i|{
-        let app = app.clone();
+        let app = app1.clone();
         let task = async move {
             println!("定时任务：{}", Local::now());
             smzdm::three_hour_hot::timing_task_smzdm_3hhot(app).await;
@@ -131,4 +168,22 @@ async fn initialize_cron_scheduler(app: tauri::AppHandle){
         tokio::spawn(task);
     }).unwrap();
     let _job_id = cron_handler.add(heart_job).await.unwrap();
+    // 什么值得买页面监控任务
+    let job2 = Job::new_cron_job("0 0/10 * * * ?",move |_uuid,_i|{
+        let app = app.clone();
+        let task = async move {
+            println!("定时任务2：{}", Local::now());
+            smzdm::monitoring::detect_list(app).await;
+        };
+        tokio::spawn(task);
+    });
+    match job2 {
+        Ok(j) => {
+            let _job_id2 = cron_handler.add(j).await.unwrap();
+        },
+        Err(e) => {
+            println!("{:?}", e);
+        }
+    }
+    
 }

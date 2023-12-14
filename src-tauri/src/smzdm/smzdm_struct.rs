@@ -41,3 +41,12 @@ pub struct Keyword{
     pub title: Vec<String>,
     pub category: Vec<String>,
 }
+
+#[derive(Deserialize,Serialize,Debug)]
+pub struct Monitor{
+    pub title: String,
+    pub url: String,
+    pub content: String,
+    pub is_update: bool,
+    pub is_expired: bool, // 是否过期
+}

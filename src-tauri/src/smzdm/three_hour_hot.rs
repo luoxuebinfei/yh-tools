@@ -8,6 +8,7 @@ use crate::smzdm::smzdm_struct::*;
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
+
 // use tokio::fs::{self, OpenOptions};
 
 // 获取三小时热门榜列表
@@ -30,7 +31,6 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
     headers.insert("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67".parse().unwrap());
 
     let mut sl = SmzdmList::new();
-    let header1 = headers.clone();
 
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -43,6 +43,8 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
         .await?
         .text()
         .await?;
+    // info!("获取三小时热门榜列表：{}", res.status());
+    // let res = res.text().await?;
     if res == "" {
         return Err("获取三小时热门榜列表失败,遇到机器人检测...".into());
     }
@@ -215,7 +217,6 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
         for element in element.select(&selector) {
             match element.value().attr("onclick") {
                 Some(text) => {
-                    println!("{}", text);
                     let re = Regex::new(r"gtmAddToCart\((?:.|\n)*?'brand':'(?<brand>.*?)' ?,(?:.|\n)*?'category':'(?<category>.*?)',(?:.|\n)*?\)").unwrap();
                     let mat = re.captures(&text).unwrap();
                     match mat.name("brand") {
@@ -233,38 +234,6 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
                     }
                 }
                 None => {}
-            }
-        }
-        if s.cates.is_empty() {
-            let client = reqwest::blocking::Client::new();
-            let res = client
-                .get(s.article_url.clone())
-                .headers(header1.clone())
-                .send()?
-                .text()?;
-            let document = Html::parse_document(&res);
-            let selector = Selector::parse("div.btn-group.J_btn_group > a.go-buy.btn").unwrap();
-            for element in document.select(&selector) {
-                match element.value().attr("onclick") {
-                    Some(text) => {
-                        let re = Regex::new(r"gtmAddToCart\((?:.|\n)*?'brand':'(?<brand>.*?)' ?,(?:.|\n)*?'category':'(?<category>.*?)',(?:.|\n)*?\)").unwrap();
-                        let mat = re.captures(&text).unwrap();
-                        match mat.name("brand") {
-                            Some(text) => {
-                                s.brand = text.as_str().to_string();
-                            }
-                            None => {}
-                        };
-                        match mat.name("category") {
-                            Some(text) => {
-                                s.cates_str = text.as_str().to_string();
-                                s.cates = text.as_str().split("/").map(|x| x.to_string()).collect();
-                            }
-                            None => {}
-                        }
-                    }
-                    None => {}
-                }
             }
         }
         let keyword = read_keyword();

@@ -11,6 +11,7 @@ import Settings from "../views/Setting.vue";
 import Notify from "../views/Notify.vue";
 import ThreeHourHot from "../views/Smzdm/ThreeHourHot.vue";
 import SearchKeyword from "../views/Smzdm/Search.vue";
+import PageMonitoring from "../views/Smzdm/PageMonitoring.vue";
 
 const router = createRouter({
   // history: createWebHashHistory(),  // hash 模式
@@ -18,7 +19,7 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      redirect:"/yh/xianbaoku",
+      redirect: "/yh/xianbaoku",
       children: [
         {
           path: "/yh/xianbaoku",
@@ -34,12 +35,12 @@ const router = createRouter({
           component: SearchKeyword,
           meta: {
             title: "搜索",
-            data:[
+            data: [
               {
-                name:"referrer",
-                content:"no-referrer"
-              }
-            ]
+                name: "referrer",
+                content: "no-referrer",
+              },
+            ],
           },
         },
         {
@@ -48,17 +49,21 @@ const router = createRouter({
           component: ThreeHourHot,
           meta: {
             title: "三小时热榜",
-            data:[
+            data: [
               {
-                name:"referrer",
-                content:"no-referrer"
-              }
-            ]
-            
+                name: "referrer",
+                content: "no-referrer",
+              },
+            ],
           },
-          // meta: {
-          //   "referrer":"no-referrer",
-          // }
+        },
+        {
+          path: "/yh/smzdm/monitoring",
+          name: "monitoring",
+          component: PageMonitoring,
+          meta: {
+            title: "页面监控",
+          }
         },
       ],
     },
@@ -106,7 +111,7 @@ export default router;
 const writer = (to) => {
   //首先找到head里的meta
   const deleArr = [];
-  document.head.childNodes.forEach(item => {
+  document.head.childNodes.forEach((item) => {
     switch (item.tagName) {
       case "META":
         deleArr.push(item);
@@ -117,25 +122,29 @@ const writer = (to) => {
         break;
     }
   });
- 
+
   //删除原来的meta
-  deleArr.forEach(item => {
+  deleArr.forEach((item) => {
     document.head.removeChild(item);
-  })
- 
+  });
+
   //添加想要的meta（全局）
   const metas = document.createElement("META");
   const creatArr = [
     { charset: "utf-8" },
     { "http-equiv": "X-UA-Compatible", content: "IE=edge" },
     //视图缩放
-    { name: "viewport", content: "width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no,minimal-ui" }
+    {
+      name: "viewport",
+      content:
+        "width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no,minimal-ui",
+    },
   ];
- 
+
   //将单个路由设定的meta加到creatArr数组中
   //局部meta和全局meta重复时，局部meta替换全局meta
   const tmpArr = to.meta.data ? to.meta.data.concat() : [];
- 
+
   if (tmpArr.length > 0) {
     to.meta.data.forEach((item, index) => {
       creatArr.forEach((ele, ind) => {
@@ -146,19 +155,19 @@ const writer = (to) => {
       });
     });
   }
- 
+
   //生成合并后的数组
   const eleArr = creatArr.concat(tmpArr);
- 
+
   //将设定的值写入文档片段
   const creatFrag = document.createDocumentFragment();
-  eleArr.forEach(ele => {
+  eleArr.forEach((ele) => {
     creatFrag.append(metas.cloneNode());
-    Object.entries(ele).forEach(item => {
+    Object.entries(ele).forEach((item) => {
       creatFrag.lastChild.setAttribute(item[0], item[1]);
     });
   });
- 
+
   //将文档片段写入head
   document.head.prepend(creatFrag);
-}
+};

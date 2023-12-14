@@ -24,6 +24,7 @@
               <template #title>什么值得买</template>
               <el-menu-item index="/yh/smzdm/search">搜索</el-menu-item>
               <el-menu-item index="/yh/smzdm/threeHourHot">三小时热榜</el-menu-item>
+              <el-menu-item index="/yh/smzdm/monitoring">页面监控</el-menu-item>
             </el-sub-menu>
           </el-sub-menu>
           <el-menu-item index="/settings">
