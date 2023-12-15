@@ -11,6 +11,40 @@ use scraper::{Html, Selector};
 
 // use tokio::fs::{self, OpenOptions};
 
+// 初始化
+fn init_smzdm() -> Smzdm {
+    return Smzdm {
+        article_id: 0,
+        article_url: String::new(),
+        article_pic_url: String::new(),
+        article_pic_style: String::new(),
+        article_title: String::new(),
+        article_price: String::new(),
+        article_referrals: String::new(),
+        article_avatar: String::new(),
+        article_avatar_url: String::new(),
+        article_display_date: String::new(),
+        article_date: String::new(),
+        article_content: String::new(),
+        article_yh_type: String::new(),
+        article_mall: String::new(),
+        article_mall_url: String::new(),
+        article_link: String::new(),
+        article_rating: 0,
+        article_rating_down: 0,
+        article_collect: 0,
+        article_comment: 0,
+        zhifa_tag: ZhifaTag {
+            name: String::new(),
+            url: String::new(),
+        },
+        article_border_style: String::new(),
+        cates_str: String::new(),
+        cates: Vec::new(),
+        brand: String::new(),
+    };
+}
+
 // 获取三小时热门榜列表
 async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Error>> {
     let mut headers = header::HeaderMap::new();
@@ -51,36 +85,7 @@ async fn get_three_hour_hot_list() -> Result<Vec<Smzdm>, Box<dyn std::error::Err
     let document = Html::parse_document(&res);
     let selector = Selector::parse("ul#feed-main-list > li").unwrap();
     for element in document.select(&selector).into_iter() {
-        let mut s = Smzdm {
-            article_id: 0,
-            article_url: String::new(),
-            article_pic_url: String::new(),
-            article_pic_style: String::new(),
-            article_title: String::new(),
-            article_price: String::new(),
-            article_referrals: String::new(),
-            article_avatar: String::new(),
-            article_avatar_url: String::new(),
-            article_display_date: String::new(),
-            article_date: String::new(),
-            article_content: String::new(),
-            article_yh_type: String::new(),
-            article_mall: String::new(),
-            article_mall_url: String::new(),
-            article_link: String::new(),
-            article_rating: 0,
-            article_rating_down: 0,
-            article_collect: 0,
-            article_comment: 0,
-            zhifa_tag: ZhifaTag {
-                name: String::new(),
-                url: String::new(),
-            },
-            article_border_style: String::new(),
-            cates_str: String::new(),
-            cates: Vec::new(),
-            brand: String::new(),
-        };
+        let mut s = init_smzdm();
         // 提取文章图片和商城
         let selector = Selector::parse("div.feed-ver-pic > a").unwrap();
         for element in element.select(&selector) {
@@ -307,36 +312,7 @@ pub async fn get_more_three_hour_hot(
     let v: serde_json::Value = serde_json::from_str(&res)?;
     let mut sl = SmzdmList::new();
     for i in v.as_array().unwrap() {
-        let mut s = Smzdm {
-            article_id: 0,
-            article_url: String::new(),
-            article_pic_url: String::new(),
-            article_pic_style: String::new(),
-            article_title: String::new(),
-            article_price: String::new(),
-            article_referrals: String::new(),
-            article_avatar: String::new(),
-            article_avatar_url: String::new(),
-            article_display_date: String::new(),
-            article_date: String::new(),
-            article_content: String::new(),
-            article_yh_type: String::new(),
-            article_mall: String::new(),
-            article_mall_url: String::new(),
-            article_link: String::new(),
-            article_rating: 0,
-            article_rating_down: 0,
-            article_collect: 0,
-            article_comment: 0,
-            zhifa_tag: ZhifaTag {
-                name: String::new(),
-                url: String::new(),
-            },
-            article_border_style: String::new(),
-            cates_str: String::new(),
-            cates: Vec::new(),
-            brand: String::new(),
-        };
+        let mut s = init_smzdm();
         s.article_id = i["article_id"].as_i64().unwrap();
         s.article_url = i["article_url"].as_str().unwrap().to_string();
         s.article_pic_url = i["article_pic_url"].as_str().unwrap().to_string();
