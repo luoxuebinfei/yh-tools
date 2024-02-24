@@ -1,79 +1,88 @@
 <template>
   <!-- <el-button @click="test">点击</el-button> -->
-  <div class="h-full">
-    <div class="Container">
-      <div>
-        <div
-          class="text-sm text-slate-500 italic"
-          v-show="listen_time.length !== 0 && isKeywordShow"
-        >
-          上次更新时间: {{ listen_time }}
+  <div class="common-layout h-full static">
+    <el-container class="fixed w-full h-full">
+      <el-aside class="h-full w-36">
+        <Menus />
+      </el-aside>
+      <el-main class="bg-gray-50 h-full">
+        <div class="h-full">
+          <div class="Container">
+            <div>
+              <div
+                class="text-sm text-slate-500 italic"
+                v-show="listen_time.length !== 0 && isKeywordShow"
+              >
+                上次更新时间: {{ listen_time }}
+              </div>
+            </div>
+            <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="关键词提醒"
+              placement="top"
+            >
+              <el-button
+                id="keywordBell"
+                class="mb-1"
+                type="primary"
+                :icon="Bell"
+                size="small"
+                v-show="isKeywordShow"
+                @click="change_keyword"
+              />
+            </el-tooltip>
+          </div>
+          <div class="mb-1" v-show="!isKeywordShow">
+            <el-tag
+              v-for="tag in dynamicTags"
+              :key="tag"
+              class="mx-1"
+              closable
+              :disable-transitions="false"
+              @close="handleClose(tag)"
+            >
+              {{ tag }}
+            </el-tag>
+            <el-input
+              v-if="inputVisible"
+              ref="InputRef"
+              v-model="inputValue"
+              class="ml-1 w-20"
+              size="small"
+              @keyup.enter="handleInputConfirm"
+              @blur="handleInputConfirm"
+            />
+            <el-button
+              v-else
+              class="button-new-tag ml-1"
+              size="small"
+              @click="showInput"
+            >
+              + 关键词
+            </el-button>
+            <el-button @click="change_keyword" :icon="ArrowUp" size="small" text
+              >收起</el-button
+            >
+          </div>
+          <div style="height: calc(100% - 22px)">
+            <el-auto-resizer>
+              <template #default="{ height, width }">
+                <el-table-v2
+                  :columns="columns"
+                  :data="data"
+                  :width="width"
+                  :height="height"
+                  :row-event-handlers="columnEvents"
+                  :row-class="rowClass"
+                  fixed
+                />
+              </template>
+            </el-auto-resizer>
+          </div>
         </div>
-      </div>
-      <el-tooltip
-        class="box-item"
-        effect="dark"
-        content="关键词提醒"
-        placement="top"
-      >
-        <el-button
-          id="keywordBell"
-          class="mb-1"
-          type="primary"
-          :icon="Bell"
-          size="small"
-          v-show="isKeywordShow"
-          @click="change_keyword"
-        />
-      </el-tooltip>
-    </div>
-    <div class="mb-1" v-show="!isKeywordShow">
-      <el-tag
-        v-for="tag in dynamicTags"
-        :key="tag"
-        class="mx-1"
-        closable
-        :disable-transitions="false"
-        @close="handleClose(tag)"
-      >
-        {{ tag }}
-      </el-tag>
-      <el-input
-        v-if="inputVisible"
-        ref="InputRef"
-        v-model="inputValue"
-        class="ml-1 w-20"
-        size="small"
-        @keyup.enter="handleInputConfirm"
-        @blur="handleInputConfirm"
-      />
-      <el-button
-        v-else
-        class="button-new-tag ml-1"
-        size="small"
-        @click="showInput"
-      >
-        + 关键词
-      </el-button>
-      <el-button @click="change_keyword" :icon="ArrowUp" size="small" text
-        >收起</el-button
-      >
-    </div>
-    <div style="height: calc(100% - 22px)">
-      <el-auto-resizer>
-        <template #default="{ height, width }">
-          <el-table-v2
-            :columns="columns"
-            :data="data"
-            :width="width"
-            :height="height"
-            :row-event-handlers="columnEvents"
-            :row-class="rowClass"
-            fixed
-          />
-        </template>
-      </el-auto-resizer>
-    </div>
+      </el-main>
+    </el-container>
   </div>
 </template>
 
@@ -85,10 +94,11 @@ import {
 } from "@tauri-apps/api/notification";
 import { WebviewWindow, appWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
-import { ref, nextTick,onBeforeUnmount } from "vue";
+import { ref, nextTick, onBeforeUnmount } from "vue";
 import { open } from "@tauri-apps/api/shell";
 import { ElInput } from "element-plus";
 import { Bell, ArrowUp } from "@element-plus/icons-vue";
+import Menus from "@/components/Menus.vue";
 
 const data = ref([]);
 
@@ -212,8 +222,8 @@ const handleInputConfirm = () => {
 const listen_sever = () => {
   appWindow.listen("xianbao_server_close", (event) => {
     location.reload();
-  })
-}
+  });
+};
 listen_sever();
 </script>
 

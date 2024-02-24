@@ -1,54 +1,40 @@
 <template>
-  <div
-    class="common-layout h-full static"
-    v-if="$router.currentRoute.value.path != '/notify'"
+  <el-menu
+    :default-active="activPath"
+    class="el-menu-vertical-demo h-full"
+    @open="handleOpen"
+    @close="handleClose"
+    router
   >
-    <el-container class="fixed w-full h-full">
-      <el-aside class="h-full w-36">
-        <el-menu
-          :default-active="activPath"
-          class="el-menu-vertical-demo h-full"
-          @open="handleOpen"
-          @close="handleClose"
-          router
-        >
-          <el-sub-menu index="/yh/xianbaoku">
-            <template #title>
-              <el-icon><IconMenu /></el-icon>
-              <span>优惠信息</span>
-            </template>
-            <el-menu-item index="/yh/xianbaoku">
-              <span>线报酷</span>
-            </el-menu-item>
-            <el-sub-menu index="/yh/smzdm">
-              <template #title>什么值得买</template>
-              <el-menu-item index="/yh/smzdm/search">搜索</el-menu-item>
-              <el-menu-item index="/yh/smzdm/threeHourHot">三小时热榜</el-menu-item>
-              <el-menu-item index="/yh/smzdm/monitoring">页面监控</el-menu-item>
-            </el-sub-menu>
-          </el-sub-menu>
-          <el-menu-item index="/settings">
-            <el-icon><Setting /></el-icon>
-            <span>设置</span>
-          </el-menu-item>
-          <el-menu-item
-            index="/restart"
-            @click="restart"
-            class="absolute inset-x-0 bottom-0"
-          >
-            <el-icon><Refresh /></el-icon>
-            <span>重启</span>
-          </el-menu-item>
-        </el-menu>
-      </el-aside>
-      <el-main class="bg-gray-50 h-full">
-        <router-view> </router-view>
-      </el-main>
-    </el-container>
-  </div>
-  <div v-else>
-    <router-view> </router-view>
-  </div>
+    <el-sub-menu index="/yh/xianbaoku">
+      <template #title>
+        <el-icon><IconMenu /></el-icon>
+        <span>优惠信息</span>
+      </template>
+      <el-menu-item index="/yh/xianbaoku">
+        <span>线报酷</span>
+      </el-menu-item>
+      <el-sub-menu index="/yh/smzdm">
+        <template #title>什么值得买</template>
+        <el-menu-item index="/yh/smzdm/search">搜索</el-menu-item>
+        <el-menu-item index="/yh/smzdm/threeHourHot">三小时热榜</el-menu-item>
+        <el-menu-item index="/yh/smzdm/monitoring">页面监控</el-menu-item>
+      </el-sub-menu>
+    </el-sub-menu>
+    <el-menu-item index="/settings">
+      <el-icon><Setting /></el-icon>
+      <span>设置</span>
+    </el-menu-item>
+    <el-menu-item
+      index="/restart"
+      @click="restart"
+      class="absolute inset-x-0 bottom-0"
+    >
+      <el-icon><Refresh /></el-icon>
+      <span>重启</span>
+    </el-menu-item>
+  </el-menu>
+  
 </template>
 
 <script lang="ts" setup>

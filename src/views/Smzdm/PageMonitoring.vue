@@ -1,44 +1,69 @@
 <template>
-  <div class="h-full">
-    <div class="mb-2" style="height: 32px">
-      <el-row :gutter="20">
-        <el-col :span="22">
-          <el-input v-model="inputUrl" placeholder="请输入网址" clearable />
-        </el-col>
-        <el-col :span="2">
-          <el-button
-            class="inline-block"
-            type="primary"
-            color="#626aef"
-            @click="add"
-            >添加</el-button
-          >
-        </el-col>
-      </el-row>
-    </div>
-    <div class="" style="height: calc(100% - 32px)">
-      <ul v-for="item in data" :key="item.url">
-        <li class="item" :class="{ 'text-gray-400': item.is_expired,'update': item.is_update }">
-          <a class="truncate inline-block" style="width: calc(100% - 80px)" :href="item.url" :title="item.title" target="_blank" @click="edit_item('click',item.url)">{{ item.title }}</a>
-          <div class="inline-block float-right">
-            <el-button
-              type="primary"
-              :icon="Delete"
-              @click="edit_item('del',item.url)"
-            />
+  <div class="common-layout h-full static">
+    <el-container class="fixed w-full h-full">
+      <el-aside class="h-full w-36"><Menus /></el-aside>
+      <el-main class="bg-gray-50 h-full">
+        <div class="h-full">
+          <div class="mb-2" style="height: 32px">
+            <el-row :gutter="20">
+              <el-col :span="22">
+                <el-input
+                  v-model="inputUrl"
+                  placeholder="请输入网址"
+                  clearable
+                />
+              </el-col>
+              <el-col :span="2">
+                <el-button
+                  class="inline-block"
+                  type="primary"
+                  color="#626aef"
+                  @click="add"
+                  >添加</el-button
+                >
+              </el-col>
+            </el-row>
           </div>
-        </li>
-      </ul>
-    </div>
+          <div class="" style="height: calc(100% - 32px)">
+            <ul v-for="item in data" :key="item.url">
+              <li
+                class="item"
+                :class="{
+                  'text-gray-400': item.is_expired,
+                  update: item.is_update,
+                }"
+              >
+                <a
+                  class="truncate inline-block"
+                  style="width: calc(100% - 80px)"
+                  :href="item.url"
+                  :title="item.title"
+                  target="_blank"
+                  @click="edit_item('click', item.url)"
+                  >{{ item.title }}</a
+                >
+                <div class="inline-block float-right">
+                  <el-button
+                    type="primary"
+                    :icon="Delete"
+                    @click="edit_item('del', item.url)"
+                  />
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </el-main>
+    </el-container>
   </div>
 </template>
 
 <script setup>
+import Menus from "@/components/Menus.vue";
 import { ref } from "vue";
 import { ElMessage } from "element-plus";
 import { Delete } from "@element-plus/icons-vue";
 import { invoke } from "@tauri-apps/api/tauri";
-
 
 const inputUrl = ref("");
 
@@ -69,14 +94,14 @@ const add = () => {
         return;
       }
     }
-    edit_item("add",inputUrl.value);
+    edit_item("add", inputUrl.value);
     inputUrl.value = "";
   }
 };
 
 // 修改监控
-const edit_item = (command,url) => {
-  invoke("edit_monitor", {command: command, url: url }).then((res) => {
+const edit_item = (command, url) => {
+  invoke("edit_monitor", { command: command, url: url }).then((res) => {
     getMonitorList();
   });
 };

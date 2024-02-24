@@ -8,7 +8,7 @@ import Notify_ from "./views/Notify.vue";
 
 <template>
   <div id="app" class="rounded-md">
-    <Menus />
+    <router-view></router-view>
   </div>
   <!-- <div v-else><Notify_ /></div> -->
 </template>

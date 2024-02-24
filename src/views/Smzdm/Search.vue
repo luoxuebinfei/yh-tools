@@ -1,157 +1,177 @@
 <template>
-  <div class="h-full">
-    <el-backtop :right="50" :bottom="50" target=".feed" />
-    <el-tabs
-      v-model="editableTabsValue"
-      type="card"
-      editable
-      class="demo-tabs h-full overflow-x-hidden feed"
-      @edit="handleTabsEdit"
-      @tab-click="tabClick"
-    >
-      <el-tab-pane
-        v-for="item in editableTabs"
-        class="h-full"
-        :key="item.name"
-        :label="item.title"
-        :name="item.name"
-        :lazy="true"
-      >
-        <template #label>
-          <span>
-            {{ item.title }}
-            <span @click="chageZhi(item.name)">
-              <el-tooltip
-                class="box-item"
-                effect="dark"
-                :content="switchStatus ? '值率≥50%' : '默认'"
-                placement="top"
-              >
-                <el-icon style="vertical-align: -15%"
-                  ><Switch
-                /></el-icon> </el-tooltip
-            ></span>
-          </span>
-        </template>
-        <div class="bg-white h-full">
-          <ul class="h-full">
-            <li
-              class="feed-row-wide"
-              v-for="i in searchData"
-              :key="i.article_id"
+  <div class="common-layout h-full static">
+    <el-container class="fixed w-full h-full">
+      <el-aside class="h-full w-36"><Menus /></el-aside>
+      <el-main class="bg-gray-50 h-full">
+        <div class="h-full">
+          <el-backtop :right="50" :bottom="50" target=".feed" />
+          <el-tabs
+            v-model="editableTabsValue"
+            type="card"
+            editable
+            class="demo-tabs h-full overflow-x-hidden feed"
+            @edit="handleTabsEdit"
+            @tab-click="tabClick"
+          >
+            <el-tab-pane
+              v-for="item in editableTabs"
+              class="h-full"
+              :key="item.name"
+              :label="item.title"
+              :name="item.name"
+              :lazy="true"
             >
-              <div>
-                <div class="z-feed-img">
-                  <span
-                    :class="{
-                      'bg-gray-300':
-                        i.article_yh_type === '过期' ||
-                        i.article_yh_type === '售罄',
-                      'bg-emerald-500': i.article_yh_type === '好价频道',
-                      'bg-red-500': !(['过期', '售罄', '好价频道'].includes(i.article_yh_type)),
-                    }"
-                    class="absolute text-sm h-5 px-1 rounded-r-md  text-white"
-                    >{{ i.article_yh_type }}</span
-                  >
-                  <a :href="i.article_url" target="_blank"
-                    ><!-- 文章图片 -->
-                    <img :src="i.article_pic_url" :alt="i.article_title"
-                  /></a>
-                </div>
-                <div class="z-feed-content">
-                  <h5
-                    class="feed-block-title text-lg truncate"
-                    :class="{
-                      'text-gray-300':
-                        i.article_yh_type === '过期' ||
-                        i.article_yh_type === '售罄',
-                    }"
-                  >
-                    <!-- 文章标题 -->
-                    <a
-                      class="inline"
-                      :href="i.article_url"
-                      :title="i.article_title"
-                      target="_blank"
-                      >{{ i.article_title }}<br
-                    /></a>
-                    <!-- 价格 -->
-                    <a
-                      class="inline-block"
-                      :class="{
-                        'text-gray-300':
-                          i.article_yh_type === '过期' ||
-                          i.article_yh_type === '售罄',
-                        'text-red-600': !(['过期', '售罄'].includes(i.article_yh_type)),
-                      }"
-                      :href="i.article_url"
-                      :title="i.article_price"
-                      target="_blank"
-                      >{{ i.article_price }}</a
+              <template #label>
+                <span>
+                  {{ item.title }}
+                  <span @click="chageZhi(item.name)">
+                    <el-tooltip
+                      class="box-item"
+                      effect="dark"
+                      :content="switchStatus ? '值率≥50%' : '默认'"
+                      placement="top"
                     >
-                  </h5>
-                  <div
-                    class="feed-block-descripe-top truncate text-sm text-gray-500"
+                      <el-icon style="vertical-align: -15%"
+                        ><Switch
+                      /></el-icon> </el-tooltip
+                  ></span>
+                </span>
+              </template>
+              <div class="bg-white h-full">
+                <ul class="h-full">
+                  <li
+                    class="feed-row-wide"
+                    v-for="i in searchData"
+                    :key="i.article_id"
                   >
-                    <!-- 内容 -->
-                    {{ i.article_content }}
-                  </div>
-                  <div class="z-feed-foot z-feed-foot-buy mt-11">
-                    <div class="z-feed-foot-l float-left">
-                      <span class="price-btn-group mr-4">
-                        <!-- 值和不值 -->
-                        <span class="price-btn-up mr-4">
-                          <span class="unvoted-wrap">
-                            <i class="text-red-600 mr-2">值</i>
-                            <span>{{ i.article_rating }}</span>
-                          </span>
-                        </span>
-                        <span class="price-btn-down">
-                          <span class="unvoted-wrap">
-                            <i class="text-gray-400 mr-2">值</i>
-                            <span>{{ i.article_rating_down }}</span>
-                          </span>
-                        </span>
-                      </span>
-                      <span class="mr-4">
-                        <el-icon><Star /></el-icon>
-                        <span class="ml-2">{{ i.article_collect }}</span>
-                      </span>
-                      <a :href="i.article_url + '#comment'" target="_blank"
-                        ><el-icon><ChatDotSquare /></el-icon
-                        ><span class="ml-2">{{ i.article_comment }}</span></a
-                      >
-                    </div>
-                    <div class="z-feed-foot-r float-right text-sm">
-                      <span class="feed-block-extras">
-                        {{ i.article_date }}
-                        <span class="ml-2">{{ i.article_mall }}</span>
-                      </span>
-                      <div class="feed-link-btn inline-block relative ml-5">
-                        <!-- app扫码 -->
-                        <vue-qrcode
-                          :value="i.article_url"
-                          :options="{ width: 120 }"
-                          class="absolute right-3 bottom-6 border-orange-400 border-2"
-                          v-show="qrcodeId == i.article_id"
-                        ></vue-qrcode>
-                        <el-button
-                          size="small"
-                          @mouseover="overQrcodeStatus(i)"
-                          @mouseout="outQrcodeStatus(i)"
-                          >APP扫码</el-button
+                    <div>
+                      <div class="z-feed-img">
+                        <span
+                          :class="{
+                            'bg-gray-300':
+                              i.article_yh_type === '过期' ||
+                              i.article_yh_type === '售罄',
+                            'bg-emerald-500': i.article_yh_type === '好价频道',
+                            'bg-red-500': ![
+                              '过期',
+                              '售罄',
+                              '好价频道',
+                            ].includes(i.article_yh_type),
+                          }"
+                          class="absolute text-sm h-5 px-1 rounded-r-md text-white"
+                          >{{ i.article_yh_type }}</span
                         >
+                        <a :href="i.article_url" target="_blank"
+                          ><!-- 文章图片 -->
+                          <img :src="i.article_pic_url" :alt="i.article_title"
+                        /></a>
+                      </div>
+                      <div class="z-feed-content">
+                        <h5
+                          class="feed-block-title text-lg truncate"
+                          :class="{
+                            'text-gray-300':
+                              i.article_yh_type === '过期' ||
+                              i.article_yh_type === '售罄',
+                          }"
+                        >
+                          <!-- 文章标题 -->
+                          <a
+                            class="inline"
+                            :href="i.article_url"
+                            :title="i.article_title"
+                            target="_blank"
+                            >{{ i.article_title }}<br
+                          /></a>
+                          <!-- 价格 -->
+                          <a
+                            class="inline-block"
+                            :class="{
+                              'text-gray-300':
+                                i.article_yh_type === '过期' ||
+                                i.article_yh_type === '售罄',
+                              'text-red-600': !['过期', '售罄'].includes(
+                                i.article_yh_type
+                              ),
+                            }"
+                            :href="i.article_url"
+                            :title="i.article_price"
+                            target="_blank"
+                            >{{ i.article_price }}</a
+                          >
+                        </h5>
+                        <div
+                          class="feed-block-descripe-top truncate text-sm text-gray-500"
+                        >
+                          <!-- 内容 -->
+                          {{ i.article_content }}
+                        </div>
+                        <div class="z-feed-foot z-feed-foot-buy mt-11">
+                          <div class="z-feed-foot-l float-left">
+                            <span class="price-btn-group mr-4">
+                              <!-- 值和不值 -->
+                              <span class="price-btn-up mr-4">
+                                <span class="unvoted-wrap">
+                                  <i class="text-red-600 mr-2">值</i>
+                                  <span>{{ i.article_rating }}</span>
+                                </span>
+                              </span>
+                              <span class="price-btn-down">
+                                <span class="unvoted-wrap">
+                                  <i class="text-gray-400 mr-2">值</i>
+                                  <span>{{ i.article_rating_down }}</span>
+                                </span>
+                              </span>
+                            </span>
+                            <span class="mr-4">
+                              <el-icon><Star /></el-icon>
+                              <span class="ml-2">{{ i.article_collect }}</span>
+                            </span>
+                            <a
+                              :href="i.article_url + '#comment'"
+                              target="_blank"
+                              ><el-icon><ChatDotSquare /></el-icon
+                              ><span class="ml-2">{{
+                                i.article_comment
+                              }}</span></a
+                            >
+                          </div>
+                          <div class="z-feed-foot-r float-right text-sm">
+                            <span class="feed-block-extras">
+                              {{ i.article_date }}
+                              <span class="ml-2">{{ i.article_mall }}</span>
+                            </span>
+                            <div
+                              class="feed-link-btn inline-block relative ml-5"
+                            >
+                              <!-- app扫码 -->
+                              <vue-qrcode
+                                :value="i.article_url"
+                                :options="{ width: 120 }"
+                                class="absolute right-3 bottom-6 border-orange-400 border-2"
+                                v-show="qrcodeId == i.article_id"
+                              ></vue-qrcode>
+                              <el-button
+                                size="small"
+                                @mouseover="overQrcodeStatus(i)"
+                                @mouseout="outQrcodeStatus(i)"
+                                >APP扫码</el-button
+                              >
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </li>
+                </ul>
               </div>
-            </li>
-          </ul>
+            </el-tab-pane>
+          </el-tabs>
         </div>
-      </el-tab-pane>
-    </el-tabs>
+      </el-main>
+    </el-container>
   </div>
+
   <el-dialog
     v-model="dialogVisible"
     title="错误"
@@ -190,6 +210,7 @@
 </template>
 
 <script lang="ts" setup>
+import Menus from "@/components/Menus.vue";
 import { invoke } from "@tauri-apps/api/tauri";
 import { ElMessageBox, TabPaneName } from "element-plus";
 import { ref } from "vue";

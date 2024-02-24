@@ -1,207 +1,232 @@
 <template>
-  <div class="staic h-full overflow-y-hidden">
-    <div class="">
-      <div class="mb-1 w-full flex justify-end" v-show="isKeywordShow">
-        <el-tooltip
-          class="box-item"
-          effect="dark"
-          content="标题关键词提醒"
-          placement="top"
-        >
-          <el-button
-            id="keywordBell"
-            class="mb-1"
-            style="color: rgb(88, 88, 255);"
-            type="primary"
-            :icon="Bell"
-            text
-            @click="change_keyword('title')"
-          />
-        </el-tooltip>
-        <el-tooltip
-          class="box-item"
-          effect="dark"
-          content="品牌 / 品类关键词提醒"
-          placement="top"
-        >
-          <el-button
-            id="keywordBell"
-            class="mb-1"
-            type="primary"
-            :icon="Bell"
-            text
-            @click="change_keyword('category')"
-          />
-        </el-tooltip>
-        <el-tooltip class="" effect="dark" content="刷新页面" placement="top">
-          <el-button
-            class=""
-            type="primary"
-            :icon="Refresh"
-            text
-            @click="refreshPage"
-          />
-        </el-tooltip>
-      </div>
-      <div class="mb-4" v-show="!isKeywordShow">
-        <el-tag
-          v-for="tag in dynamicTags"
-          :key="tag"
-          class="mx-1"
-          closable
-          :disable-transitions="false"
-          @close="handleClose(tag)"
-        >
-          {{ tag }}
-        </el-tag>
-        <el-input
-          v-if="inputVisible"
-          ref="InputRef"
-          v-model="inputValue"
-          class="ml-1 w-20"
-          size="small"
-          @keyup.enter="handleInputConfirm"
-          @blur="handleInputConfirm"
-        />
-        <el-button
-          v-else
-          class="button-new-tag ml-1"
-          size="small"
-          @click="showInput"
-        >
-          + 关键词
-        </el-button>
-        <el-button @click="change_keyword" :icon="ArrowUp" size="small" text
-          >收起</el-button
-        >
-      </div>
-    </div>
-    <div class="relative overflow-x-hidden feed-list" style="height: 94%">
-      <el-row
-        :gutter="10"
-        class="bg-neutral-100"
-        v-infinite-scroll="load"
-        :infinite-scroll-delay="500"
-        :infinite-scroll-immediate="false"
-      >
-        <el-col
-          class="relative"
-          :xs="{ span: 24 }"
-          :sm="{ span: 8 }"
-          :md="{ span: 6 }"
-          :lg="{ span: 4 }"
-          :xl="{ span: 3 }"
-          v-for="i in smzdm_list"
-          :key="i.article_id"
-          ><div
-            class="px-2 py-1 grid-content bg-white border-red-6001 border-21"
-            :style="i.article_border_style"
-          >
-            <div class="relative">
-              <!-- 商品图片 -->
-              <a :href="i.article_url" target="_blank">
-                <img :src="i.article_pic_url" alt="" />
-              </a>
-              <!-- 图片右下角的商城标签 -->
-              <a
-                class="absolute bottom-0 right-0 tag-bottom-right"
-                :href="i.article_mall_url"
-                target="_blank"
-                >{{ i.article_mall }}</a
+  <div class="common-layout h-full static">
+    <el-container class="fixed w-full h-full">
+      <el-aside class="h-full w-36"><Menus /></el-aside>
+      <el-main class="bg-gray-50 h-full">
+        <div class="staic h-full overflow-y-hidden">
+          <div class="">
+            <div class="mb-1 w-full flex justify-end" v-show="isKeywordShow">
+              <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="标题关键词提醒"
+                placement="top"
               >
-            </div>
-            <!-- 标题 -->
-            <div
-              class="text-sm whitespace-normal truncate"
-              style="height: 40px"
-            >
-              <a :href="i.article_url" target="_blank"
-                ><object class="inline" v-show="i.zhifa_tag.name !== ''">
-                  <a
-                    class="text-xs bg-red-100 text-red-700 px-1 rounded-md"
-                    :href="i.zhifa_tag.url"
-                    target="_blank"
-                    >{{ i.zhifa_tag.name }}</a
-                  ></object
-                ><span :title="i.article_title" v-html="i.article_title"></span
-              ></a>
-            </div>
-            <!-- 价格 -->
-            <div
-              class="text-sm leading-5 text-red-500 truncate whitespace-normal line-clamp-1"
-              style="height: 40px; line-height: 40px"
-            >
-              <a
-                :href="i.article_url"
-                target="_blank"
-                :title="i.article_price"
-                >{{ i.article_price }}</a
-              >
-            </div>
-            <div class="my-1 text-xs">
-              <!-- 作者 -->
-              <div class="float-left">
-                <a
-                  class="inline-block align-middle z-avatar-pic"
-                  :href="i.article_avatar_url"
-                  target="_blank"
-                  ><img class="rounded-full" :src="i.article_avatar" alt=""
-                /></a>
-                <a
-                  class="inline-block text-center align-middle text-sky-600 whitespace-nowrap truncate"
-                  style="max-width: 118px"
-                  :href="i.article_avatar_url"
-                  target="_blank"
-                  >{{ i.article_referrals }}</a
-                >
-              </div>
-              <!-- 发布时间 -->
-              <div class="float-right">{{ i.article_date }}</div>
-              <div></div>
-            </div>
-            <!-- 文章内容 -->
-            <div
-              class="mt-8 mb-2 text-xs text-slate-600 truncate whitespace-normal line-clamp-4"
-              style="height: 64px"
-              :title="i.article_content"
-              v-html="i.article_content"
-            ></div>
-            <div class="">
-              <!-- 评分和评论数量 -->
-              <div
-                class="text-xs inline-block items-stretch float-left"
-                style="line-height: 24px"
-              >
-                <span class="mr-2 self-auto"
-                  ><i class="mr-1">值</i>{{ i.article_rating }}</span
-                >
-                <a :href="i.article_url + '#comments'" target="_blank" class=""
-                  ><i class="mr-1 self-center"
-                    ><el-icon><ChatDotSquare /></el-icon></i
-                  ><span class="">{{ i.article_comment }}</span></a
-                >
-              </div>
-              <div class="inline-block float-right">
-                <!-- app扫码 -->
-                <vue-qrcode
-                  :value="i.article_url"
-                  :options="{ width: 120 }"
-                  class="absolute right-3 bottom-11 border-orange-400 border-2"
-                  v-show="qrcodeId == i.article_id"
-                ></vue-qrcode>
                 <el-button
-                  size="small"
-                  @mouseover="overQrcodeStatus(i)"
-                  @mouseout="outQrcodeStatus(i)"
-                  >APP扫码</el-button
+                  id="keywordBell"
+                  class="mb-1"
+                  style="color: rgb(88, 88, 255)"
+                  type="primary"
+                  :icon="Bell"
+                  text
+                  @click="change_keyword('title')"
+                />
+              </el-tooltip>
+              <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="品牌 / 品类关键词提醒"
+                placement="top"
+              >
+                <el-button
+                  id="keywordBell"
+                  class="mb-1"
+                  type="primary"
+                  :icon="Bell"
+                  text
+                  @click="change_keyword('category')"
+                />
+              </el-tooltip>
+              <el-tooltip
+                class=""
+                effect="dark"
+                content="刷新页面"
+                placement="top"
+              >
+                <el-button
+                  class=""
+                  type="primary"
+                  :icon="Refresh"
+                  text
+                  @click="refreshPage"
+                />
+              </el-tooltip>
+            </div>
+            <div class="mb-4" v-show="!isKeywordShow">
+              <el-tag
+                v-for="tag in dynamicTags"
+                :key="tag"
+                class="mx-1"
+                closable
+                :disable-transitions="false"
+                @close="handleClose(tag)"
+              >
+                {{ tag }}
+              </el-tag>
+              <el-input
+                v-if="inputVisible"
+                ref="InputRef"
+                v-model="inputValue"
+                class="ml-1 w-20"
+                size="small"
+                @keyup.enter="handleInputConfirm"
+                @blur="handleInputConfirm"
+              />
+              <el-button
+                v-else
+                class="button-new-tag ml-1"
+                size="small"
+                @click="showInput"
+              >
+                + 关键词
+              </el-button>
+              <el-button
+                @click="change_keyword"
+                :icon="ArrowUp"
+                size="small"
+                text
+                >收起</el-button
+              >
+            </div>
+          </div>
+          <div class="relative overflow-x-hidden feed-list" style="height: 94%">
+            <el-row
+              :gutter="10"
+              class="bg-neutral-100"
+              v-infinite-scroll="load"
+              :infinite-scroll-delay="500"
+              :infinite-scroll-immediate="false"
+            >
+              <el-col
+                class="relative"
+                :xs="{ span: 24 }"
+                :sm="{ span: 8 }"
+                :md="{ span: 6 }"
+                :lg="{ span: 4 }"
+                :xl="{ span: 3 }"
+                v-for="i in smzdm_list"
+                :key="i.article_id"
+                ><div
+                  class="px-2 py-1 grid-content bg-white border-red-6001 border-21"
+                  :style="i.article_border_style"
                 >
-              </div>
-              <div></div>
-            </div></div
-        ></el-col>
-      </el-row>
-    </div>
-    <el-backtop :right="50" :bottom="50" target=".feed-list" class="" />
+                  <div class="relative">
+                    <!-- 商品图片 -->
+                    <a :href="i.article_url" target="_blank">
+                      <img :src="i.article_pic_url" alt="" />
+                    </a>
+                    <!-- 图片右下角的商城标签 -->
+                    <a
+                      class="absolute bottom-0 right-0 tag-bottom-right"
+                      :href="i.article_mall_url"
+                      target="_blank"
+                      >{{ i.article_mall }}</a
+                    >
+                  </div>
+                  <!-- 标题 -->
+                  <div
+                    class="text-sm whitespace-normal truncate"
+                    style="height: 40px"
+                  >
+                    <a :href="i.article_url" target="_blank"
+                      ><object class="inline" v-show="i.zhifa_tag.name !== ''">
+                        <a
+                          class="text-xs bg-red-100 text-red-700 px-1 rounded-md"
+                          :href="i.zhifa_tag.url"
+                          target="_blank"
+                          >{{ i.zhifa_tag.name }}</a
+                        ></object
+                      ><span
+                        :title="i.article_title"
+                        v-html="i.article_title"
+                      ></span
+                    ></a>
+                  </div>
+                  <!-- 价格 -->
+                  <div
+                    class="text-sm leading-5 text-red-500 truncate whitespace-normal line-clamp-1"
+                    style="height: 40px; line-height: 40px"
+                  >
+                    <a
+                      :href="i.article_url"
+                      target="_blank"
+                      :title="i.article_price"
+                      >{{ i.article_price }}</a
+                    >
+                  </div>
+                  <div class="my-1 text-xs">
+                    <!-- 作者 -->
+                    <div class="float-left">
+                      <a
+                        class="inline-block align-middle z-avatar-pic"
+                        :href="i.article_avatar_url"
+                        target="_blank"
+                        ><img
+                          class="rounded-full"
+                          :src="i.article_avatar"
+                          alt=""
+                      /></a>
+                      <a
+                        class="inline-block text-center align-middle text-sky-600 whitespace-nowrap truncate"
+                        style="max-width: 118px"
+                        :href="i.article_avatar_url"
+                        target="_blank"
+                        >{{ i.article_referrals }}</a
+                      >
+                    </div>
+                    <!-- 发布时间 -->
+                    <div class="float-right">{{ i.article_date }}</div>
+                    <div></div>
+                  </div>
+                  <!-- 文章内容 -->
+                  <div
+                    class="mt-8 mb-2 text-xs text-slate-600 truncate whitespace-normal line-clamp-4"
+                    style="height: 64px"
+                    :title="i.article_content"
+                    v-html="i.article_content"
+                  ></div>
+                  <div class="">
+                    <!-- 评分和评论数量 -->
+                    <div
+                      class="text-xs inline-block items-stretch float-left"
+                      style="line-height: 24px"
+                    >
+                      <span class="mr-2 self-auto"
+                        ><i class="mr-1">值</i>{{ i.article_rating }}</span
+                      >
+                      <a
+                        :href="i.article_url + '#comments'"
+                        target="_blank"
+                        class=""
+                        ><i class="mr-1 self-center"
+                          ><el-icon><ChatDotSquare /></el-icon></i
+                        ><span class="">{{ i.article_comment }}</span></a
+                      >
+                    </div>
+                    <div class="inline-block float-right">
+                      <!-- app扫码 -->
+                      <vue-qrcode
+                        :value="i.article_url"
+                        :options="{ width: 120 }"
+                        class="absolute right-3 bottom-11 border-orange-400 border-2"
+                        v-show="qrcodeId == i.article_id"
+                      ></vue-qrcode>
+                      <el-button
+                        size="small"
+                        @mouseover="overQrcodeStatus(i)"
+                        @mouseout="outQrcodeStatus(i)"
+                        >APP扫码</el-button
+                      >
+                    </div>
+                    <div></div>
+                  </div></div
+              ></el-col>
+            </el-row>
+          </div>
+          <el-backtop :right="50" :bottom="50" target=".feed-list" class="" />
+        </div>
+      </el-main>
+    </el-container>
   </div>
 
   <el-dialog
@@ -217,10 +242,12 @@
         target="_blank"
       >
         什么值得买 </a
-      >中手动获取<span class="font-semibold"> cookies </span
-      >填入下方输入框中
-      <el-input v-model="cookiesInput" placeholder="请填入新的cookies" clearable /></span
-    >
+      >中手动获取<span class="font-semibold"> cookies </span>填入下方输入框中
+      <el-input
+        v-model="cookiesInput"
+        placeholder="请填入新的cookies"
+        clearable
+    /></span>
     <template #footer>
       <span class="dialog-footer">
         <el-button class="bg-blue-500" type="primary" @click="dialogEvent">
@@ -231,6 +258,7 @@
   </el-dialog>
 </template>
 <script lang="ts" setup>
+import Menus from "@/components/Menus.vue";
 import { invoke } from "@tauri-apps/api/tauri";
 import { nextTick, onMounted, ref } from "vue";
 import { Refresh, Bell, ArrowUp, ArrowUpBold } from "@element-plus/icons-vue";
