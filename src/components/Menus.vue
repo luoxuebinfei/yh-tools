@@ -68,4 +68,10 @@ const route = useRoute();
 console.log(toRaw(route));
 </script>
 
-<style scoped></style>
+<style scoped>
+/* 激活样式 */
+.is-active {
+  /* 配色不太好 */
+  background-color: #ececec;
+}
+</style>

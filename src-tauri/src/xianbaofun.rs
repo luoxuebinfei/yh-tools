@@ -10,7 +10,7 @@ use tokio::{
 
 use std::cmp;
 
-use crate::notify;
+use crate::{db, notify};
 
 // 作为是否已有线程访问线报库的全局变量
 static R: AtomicBool = AtomicBool::new(false);
@@ -26,7 +26,7 @@ pub struct Push {
     pub datetime: String,
     pub id: i64,
     pub louzhu: String,
-    pub louzhuregtime: Option<serde_json::Value>,
+    pub louzhuregtime: Option<String>,
     pub shijianchuo: i64,
     pub shorttime: String,
     pub title: String,
@@ -37,7 +37,7 @@ pub struct Push {
 #[tauri::command]
 pub async fn get_data(window: Window, app: tauri::AppHandle) {
     if R.load(Ordering::Relaxed) {
-        let data = read_to_file().await;
+        let data = read_from_sql().await;
         window.emit("listen_data", &data).unwrap();
         return;
     }
@@ -67,7 +67,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
             if old_list.is_empty() {
                 window.emit("listen_data", &html).unwrap();
                 old_list = html;
-                write_to_file(&old_list).await;
+                write_to_sql(&old_list).await;
                 // println!("old_list: {:?}", &old_list);
             } else {
                 // 取差集
@@ -113,7 +113,7 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                         // notify::notify(body, app.clone());
                     }
                 });
-                write_to_file(&html).await;
+                write_to_sql(&html).await;
                 old_list = html;
             }
             for i in notify_list {
@@ -177,36 +177,47 @@ pub fn sim_jaro(s1: &str, s2: &str) -> f64 {
     (m / s1_len as f64 + m / s2_len as f64 + (m - t) / m) / 3.0
 }
 
-// 写入json文件
-async fn write_to_file(data: &PushList) {
-    let file_path = r".\data\xianbaofun.json";
-    let _ = fs::create_dir_all(r".\data").await;
-    let file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .create(true)
-        .open(file_path)
-        .await
-        .unwrap()
-        .into_std()
-        .await;
-    serde_json::to_writer(file, &data).unwrap();
+// 写入数据库
+async fn write_to_sql(data: &PushList) {
+    let db_path = db::get_db_path();
+    let conn = rusqlite::Connection::open(db_path).unwrap();
+    let mut reverse_data = data.clone();
+    reverse_data.reverse();
+    for i in reverse_data {
+        conn.execute(
+            "INSERT OR IGNORE INTO xianbaoku (cateid, comments, content, catename, datetime, id, louzhu, louzhuregtime, shijianchuo, shorttime, title, url, yuanurl) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            &[&i.cateid,&i.comments.to_string(),&i.content,&i.catename,&i.datetime,&i.id.to_string(),&i.louzhu,&i.louzhuregtime.map_or("".to_string(), |x| x.to_string()),&i.shijianchuo.to_string(),&i.shorttime,&i.title,&i.url,&i.yuanurl],
+        ).unwrap();
+    }
 }
 
-// 读取json文件
-async fn read_to_file() -> PushList {
-    let file_path = r".\data\xianbaofun.json";
-    let _ = fs::create_dir_all(r".\data").await;
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(file_path)
-        .await
-        .unwrap()
-        .into_std()
-        .await;
-    serde_json::from_reader(file).unwrap()
+// 从数据库读取
+async fn read_from_sql() -> PushList {
+    let db_path = db::get_db_path();
+    let conn = rusqlite::Connection::open(db_path).unwrap();
+    let mut stmt = conn.prepare("SELECT * FROM xianbaoku ORDER BY id DESC LIMIT 10").unwrap();
+    let push_iter = stmt.query_map([], |row| {
+        Ok(Push {
+            id: row.get("id")?,
+            cateid: row.get("cateid")?,
+            comments: row.get("comments")?,
+            content: row.get("content")?,
+            catename: row.get("catename")?,
+            datetime: row.get("datetime")?,
+            louzhu: row.get("louzhu")?,
+            louzhuregtime: row.get("louzhuregtime")?,
+            shijianchuo: row.get("shijianchuo")?,
+            shorttime: row.get("shorttime")?,
+            title: row.get("title")?,
+            url: row.get("url")?,
+            yuanurl: row.get("yuanurl")?,
+        })
+    }).unwrap();
+    let mut pushes = Vec::new();
+    for push in push_iter {
+        pushes.push(push.unwrap());
+    }
+    pushes
 }
 
 // 读取关键词的json文件

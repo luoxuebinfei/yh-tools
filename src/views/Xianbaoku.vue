@@ -126,7 +126,7 @@ const columns = ref([
 ]);
 const columnEvents = {
   onclick: (e) => {
-    open(`http://new.xianbao.fun/${e.rowData.url}`);
+    open(`http://new.xianbao.fun${e.rowData.url}`);
   },
 };
 

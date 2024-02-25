@@ -5,6 +5,7 @@ mod xianbaofun;
 
 mod tray;
 mod smzdm;
+mod db;
 
 use std::io;
 
@@ -120,9 +121,11 @@ fn main() {
                 .show()
                 .unwrap();
         }))
+        .plugin(tauri_plugin_sql::Builder::default().build())
         .setup(|app| {
             set_window_shadow(app);
             let _sched = block_on(initialize_cron_scheduler(app.handle()));
+            db::init();
             Ok(())
         })
         .system_tray(tray::menu())
