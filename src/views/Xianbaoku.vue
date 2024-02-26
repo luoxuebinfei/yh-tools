@@ -99,6 +99,7 @@ import { open } from "@tauri-apps/api/shell";
 import { ElInput } from "element-plus";
 import { Bell, ArrowUp } from "@element-plus/icons-vue";
 import Menus from "@/components/Menus.vue";
+import Database from "tauri-plugin-sql-api";
 
 const data = ref([]);
 
@@ -125,7 +126,7 @@ const columns = ref([
   // 添加其他列定义
 ]);
 const columnEvents = {
-  onclick: (e) => {
+  onclick: (e: { rowData: { url: any; }; }) => {
     open(`http://new.xianbao.fun${e.rowData.url}`);
   },
 };
@@ -134,7 +135,7 @@ const listen_time = ref("");
 const listen_timestamp = ref(0);
 const get_data = async () => {
   invoke("get_data");
-  appWindow.listen("listen_data", (event) => {
+  appWindow.listen("listen_data", (event: { payload: never[]; }) => {
     // console.log(new Date(Date.parse(new Date().toString())));
     const nowtime = new Date().getTime();
     data.value = [...(event.payload as never[]), ...data.value];
@@ -143,7 +144,7 @@ const get_data = async () => {
     }
     // console.log(event);
   });
-  appWindow.listen("listen_data_time", (event) => {
+  appWindow.listen("listen_data_time", (event: { payload: number; }) => {
     listen_timestamp.value = event.payload as number;
     const date = new Date(event.payload as number);
     const year = date.getFullYear();
@@ -190,17 +191,17 @@ const dynamicTags = ref([""]);
 const inputVisible = ref(false);
 const InputRef = ref<InstanceType<typeof ElInput>>();
 // 获取关键词
-const getKeyword = () => {
-  invoke("return_keyword").then((res) => {
-    console.log(res);
-    dynamicTags.value = res as string[];
-  });
+const getKeyword = async() => {
+  const db = await Database.load("sqlite:database.db");
+  const res: any[] = await db.select("SELECT keyword FROM keywords WHERE belong = 'xianbaoku'");
+  dynamicTags.value = res.map((item: { keyword: any; }) => item.keyword);
 };
 getKeyword();
 
-const handleClose = (tag: string) => {
+const handleClose = async(tag: string) => {
   dynamicTags.value.splice(dynamicTags.value.indexOf(tag), 1);
-  invoke("change_keyword", { params: dynamicTags.value });
+  const db = await Database.load("sqlite:database.db");
+  await db.execute("DELETE FROM keywords WHERE keyword = ? AND belong = 'xianbaoku'", [tag]);
 };
 
 const showInput = () => {
@@ -210,17 +211,18 @@ const showInput = () => {
   });
 };
 
-const handleInputConfirm = () => {
+const handleInputConfirm = async() => {
   if (inputValue.value) {
     dynamicTags.value.push(inputValue.value);
-    invoke("change_keyword", { params: dynamicTags.value });
+    const db = await Database.load("sqlite:database.db");
+    await db.execute("INSERT INTO keywords (keyword, belong) VALUES (?, 'xianbaoku')", [inputValue.value]);
   }
   inputVisible.value = false;
   inputValue.value = "";
 };
 
 const listen_sever = () => {
-  appWindow.listen("xianbao_server_close", (event) => {
+  appWindow.listen("xianbao_server_close", (event: any) => {
     location.reload();
   });
 };

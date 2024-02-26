@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use std::sync::atomic::{Ordering, AtomicBool};
 use tauri::Window;
-use tokio::{
-    fs::{self, OpenOptions},
-    time,
-};
+use tokio::time;
 
 use std::cmp;
 
@@ -222,56 +219,20 @@ async fn read_from_sql() -> PushList {
 
 // 读取关键词的json文件
 async fn read_keyword() -> Vec<String> {
-    let file_path = r".\data\xianbacfun_keyword.json";
-    let _ = fs::create_dir_all(r".\data").await;
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(file_path)
-        .await
-        .unwrap()
-        .into_std()
-        .await;
-    match serde_json::from_reader(file) {
-        Ok(data) => data,
-        Err(e) => {
-            if e.is_eof() {
-                vec![]
-            } else {
-                panic!("{}", e);
-            }
-        }
+    let db_path = db::get_db_path();
+    let conn = rusqlite::Connection::open(db_path).unwrap();
+    let mut stmt = conn.prepare("SELECT keyword FROM keywords WHERE belong = 'xianbaoku'").unwrap();
+    let keyword_iter = stmt.query_map([], |row| {
+        Ok(row.get::<usize,String>(0)?)
+    }).unwrap();
+    let mut keywords = Vec::new();
+    for keyword in keyword_iter {
+        keywords.push(keyword.unwrap());
     }
+    keywords
 }
 
-// 写入关键词的json文件
-async fn write_keyword(data: Vec<String>) {
-    let file_path = r".\data\xianbacfun_keyword.json";
-    let _ = fs::create_dir_all(r".\data").await;
-    let file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .create(true)
-        .open(file_path)
-        .await
-        .unwrap()
-        .into_std()
-        .await;
-    serde_json::to_writer(file, &data).unwrap();
-}
 
-// 从文件中读取关键词
-#[tauri::command]
-pub async fn return_keyword() -> Vec<String> {
-    read_keyword().await
-}
-
-// 改变关键词时写入文件
-#[tauri::command]
-pub async fn change_keyword(params: Vec<String>) {
-    write_keyword(params).await;
-}
 
 // xianbao服务循环不可用时将状态改为false
 // #[tauri::command]

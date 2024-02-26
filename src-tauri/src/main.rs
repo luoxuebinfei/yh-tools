@@ -134,8 +134,6 @@ fn main() {
             greet,
             create_window,
             get_data,
-            xianbaofun::return_keyword,
-            xianbaofun::change_keyword,
             notify::change_hover_status,
             test2,
             smzdm::three_hour_hot::smzdm_3hhot,

@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use dirs::config_dir;
 
 // 检查数据库文件是否存在，如果不存在则创建一个。
 pub fn init() {
@@ -39,6 +40,10 @@ fn create_db_file() {
         );
         ",
         (),
+    ).unwrap();
+    // 创建keyword表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS keywords (keyword TEXT NOT NULL,belong TEXT NOT NULL);",()
     ).unwrap();
     // 创建smzdm表
     conn.execute(
@@ -81,5 +86,5 @@ fn db_file_exists() -> bool {
 
 // 获取数据库文件应所在的路径。
 pub fn get_db_path() -> String {
-    "./data/database.db".to_string()
+    config_dir().unwrap().join("com.yhtools").join("database.db").to_str().unwrap().to_string()
 }
