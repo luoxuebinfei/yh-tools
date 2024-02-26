@@ -263,6 +263,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { nextTick, onMounted, ref } from "vue";
 import { Refresh, Bell, ArrowUp, ArrowUpBold } from "@element-plus/icons-vue";
 import { ElInput, ElMessageBox } from "element-plus";
+import Database from "tauri-plugin-sql-api";
 
 const smzdm_list = ref<Smzdm_interface[]>([]);
 
@@ -350,19 +351,26 @@ const change_keyword = (e) => {
   isKeywordShow.value = !isKeywordShow.value;
 };
 // 获取关键词
-const getKeyword = () => {
-  invoke("return_smzdm_keyword").then((res) => {
-    console.log(res);
-    keywordTags.value = res as Keyword;
-    // dynamicTags.value = res as string[];
-  });
+const getKeyword = async() => {
+  const db = await Database.load("sqlite:database.db");
+  const res_title: any[] = await db.select("SELECT keyword FROM keywords WHERE belong = 'smzdm_title'");
+  const res_category: any[] = await db.select("SELECT keyword FROM keywords WHERE belong = 'smzdm_category'");
+  keywordTags.value = {
+    title: res_title.map((item: { keyword: any; }) => item.keyword),
+    category: res_category.map((item: { keyword: any; }) => item.keyword)
+  }
 };
 getKeyword();
 
-const handleClose = (tag: string) => {
+const handleClose = async(tag: string) => {
   dynamicTags.value.splice(dynamicTags.value.indexOf(tag), 1);
   keywordTags.value[keywordStatus.value] = dynamicTags.value;
-  invoke("change_smzdm_keyword", { params: keywordTags.value });
+  const db = await Database.load("sqlite:database.db");
+  if (keywordStatus.value === "title") {
+    db.execute("DELETE FROM keywords WHERE keyword = ? AND belong = 'smzdm_title'", [tag]);
+  } else if (keywordStatus.value === "category") {
+    db.execute("DELETE FROM keywords WHERE keyword = ? AND belong = 'smzdm_category'", [tag]);
+  }
 };
 
 const showInput = () => {
@@ -372,11 +380,16 @@ const showInput = () => {
   });
 };
 
-const handleInputConfirm = () => {
+const handleInputConfirm = async() => {
   if (inputValue.value) {
     dynamicTags.value.push(inputValue.value);
     keywordTags.value[keywordStatus.value] = dynamicTags.value;
-    invoke("change_smzdm_keyword", { params: keywordTags.value });
+    const db = await Database.load("sqlite:database.db");
+    if (keywordStatus.value === "title") {
+      db.execute("INSERT INTO keywords (keyword, belong) VALUES (?, 'smzdm_title')", [inputValue.value]);
+    } else if (keywordStatus.value === "category") {
+      db.execute("INSERT INTO keywords (keyword, belong) VALUES (?, 'smzdm_category')", [inputValue.value]);
+    }
   }
   inputVisible.value = false;
   inputValue.value = "";

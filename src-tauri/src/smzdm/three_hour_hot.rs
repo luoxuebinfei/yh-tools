@@ -4,7 +4,7 @@ use std::{
     vec,
 };
 
-use crate::smzdm::smzdm_struct::*;
+use crate::{db, smzdm::smzdm_struct::*};
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
@@ -386,49 +386,30 @@ pub fn read_smzdm_cookie() -> String {
 
 // 读取关键词的json文件
 fn read_keyword() -> Keyword {
-    let file_path = r".\data\smzdm_keyword.json";
-    let _ = fs::create_dir_all(r".\data");
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(file_path)
-        .unwrap();
-    match serde_json::from_reader(file) {
-        Ok(data) => data,
-        Err(e) => {
-            if e.is_eof() {
-                Keyword {
-                    title: Vec::new(),
-                    category: Vec::new(),
-                }
-            } else if e.is_data() {
-                Keyword {
-                    title: Vec::new(),
-                    category: Vec::new(),
-                }
-            } else {
-                panic!("{}", e);
-            }
-        }
+    let db_path = db::get_db_path();
+    let conn = rusqlite::Connection::open(db_path).unwrap();
+    let mut stmt = conn.prepare("SELECT keyword FROM keywords WHERE belong = 'smzdm_title'").unwrap();
+    let keyword_iter = stmt.query_map([], |row| {
+        Ok(row.get::<usize,String>(0)?)
+    }).unwrap();
+    let mut keywords_title = Vec::new();
+    for keyword in keyword_iter {
+        keywords_title.push(keyword.unwrap());
+    }
+    let mut stmt = conn.prepare("SELECT keyword FROM keywords WHERE belong = 'smzdm_category'").unwrap();
+    let keyword_iter = stmt.query_map([], |row| {
+        Ok(row.get::<usize,String>(0)?)
+    }).unwrap();
+    let mut keywords_category = Vec::new();
+    for keyword in keyword_iter {
+        keywords_category.push(keyword.unwrap());
+    }
+    Keyword {
+        title: keywords_title,
+        category: keywords_category,
     }
 }
 
-// 写入关键词的json文件
-async fn write_keyword(data: Keyword) {
-    let file_path = r".\data\smzdm_keyword.json";
-    let _ = tokio::fs::create_dir_all(r".\data").await;
-    let file = tokio::fs::OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .create(true)
-        .open(file_path)
-        .await
-        .unwrap()
-        .into_std()
-        .await;
-    serde_json::to_writer(file, &data).unwrap();
-}
 
 // 读取经过关键词筛选的json文件
 fn read_filter_item() -> Vec<Smzdm> {
@@ -516,14 +497,4 @@ pub async fn smzdm_3hhot_more(pagenum: i32) -> Result<SmzdmList, String> {
     }
 }
 
-// 从文件中读取关键词
-#[tauri::command]
-pub async fn return_smzdm_keyword() -> Keyword {
-    read_keyword()
-}
 
-// 改变关键词时写入文件
-#[tauri::command]
-pub async fn change_smzdm_keyword(params: Keyword) {
-    write_keyword(params).await;
-}

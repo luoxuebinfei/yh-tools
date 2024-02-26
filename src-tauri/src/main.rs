@@ -138,8 +138,6 @@ fn main() {
             test2,
             smzdm::three_hour_hot::smzdm_3hhot,
             smzdm::three_hour_hot::smzdm_3hhot_more,
-            smzdm::three_hour_hot::return_smzdm_keyword,
-            smzdm::three_hour_hot::change_smzdm_keyword,
             smzdm::search::smzdm_search,
             smzdm::search::smzdm_write_cookies,
             smzdm::monitoring::get_monitor_list,
