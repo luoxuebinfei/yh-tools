@@ -215,6 +215,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { ElMessageBox, TabPaneName } from "element-plus";
 import { ref } from "vue";
 import { Switch } from "@element-plus/icons-vue";
+import Database from "tauri-plugin-sql-api";
 
 export interface Smzdm_interface {
   article_id: number; //文章id
@@ -278,19 +279,26 @@ const keywordTags = ref<Keyword>({
   title: [],
   category: [],
 }); // 存储获取的关键词
-const getKeyword = () => {
-  invoke("return_smzdm_keyword").then((res) => {
-    console.log(res);
-    keywordTags.value = res as Keyword;
-    [...keywordTags.value.title, ...keywordTags.value.category].forEach(
-      (item) => {
-        editableTabs.value.push({
-          title: item,
-          name: item,
-        });
-      }
-    );
-  });
+const getKeyword = async () => {
+  const db = await Database.load("sqlite:database.db");
+  const res_title: any[] = await db.select(
+    "SELECT keyword FROM keywords WHERE belong = 'smzdm_title'"
+  );
+  const res_category: any[] = await db.select(
+    "SELECT keyword FROM keywords WHERE belong = 'smzdm_category'"
+  );
+  keywordTags.value = {
+    title: res_title.map((item: { keyword: any }) => item.keyword),
+    category: res_category.map((item: { keyword: any }) => item.keyword),
+  };
+  [...keywordTags.value.title, ...keywordTags.value.category].forEach(
+    (item) => {
+      editableTabs.value.push({
+        title: item,
+        name: item,
+      });
+    }
+  );
 };
 getKeyword();
 

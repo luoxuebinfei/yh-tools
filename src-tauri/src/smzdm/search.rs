@@ -36,12 +36,12 @@ pub async fn search_keyword(
         .unwrap();
     let url = if is_zhi {
         format!(
-            "https://search.smzdm.com/?c=faxian&s={}&order=score&f_c=zhi",
+            "https://search.smzdm.com/?c=faxian&s={}&order=score&f_c=zhi&v=b&mx_v=b",
             keyword
         )
     } else {
         format!(
-            "https://search.smzdm.com/?c=faxian&s={}&order=score",
+            "https://search.smzdm.com/?c=faxian&s={}&order=score&v=b&mx_v=b",
             keyword
         )
     };

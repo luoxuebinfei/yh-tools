@@ -11,6 +11,7 @@ use std::io;
 
 use chrono::Local;
 use tauri::{api::notification::Notification, async_runtime::block_on};
+use dirs::config_dir;
 use tokio::time;
 use tokio_cron_scheduler::{JobScheduler, Job};
 use tracing::Level;
@@ -90,7 +91,8 @@ impl FormatTime for LocalTimer {
 }
 
 fn main() {
-    let file_appender = tracing_appender::rolling::daily("./logs", "tracing.log");
+    let log_path = config_dir().unwrap().join("com.yhtools").join("logs");
+    let file_appender = tracing_appender::rolling::daily(log_path, "tracing.log");
     // 定义日志文件滚动策略，将文件名中的日期放在后面
     
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);

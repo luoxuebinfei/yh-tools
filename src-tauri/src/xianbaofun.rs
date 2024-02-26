@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use std::sync::atomic::{Ordering, AtomicBool};
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::Window;
 use tokio::time;
 
@@ -59,10 +59,16 @@ pub async fn get_data(window: Window, app: tauri::AppHandle) {
                 }
             };
             // println!("{}", Local::now());
-            window.emit("listen_data_time", Local::now().timestamp_millis()).unwrap();
+            window
+                .emit("listen_data_time", Local::now().timestamp_millis())
+                .unwrap();
             let mut notify_list = vec![];
             if old_list.is_empty() {
-                window.emit("listen_data", &html).unwrap();
+                if html.is_empty() {
+                    window.emit("listen_data", read_from_sql().await).unwrap();
+                } else {
+                    window.emit("listen_data", &html).unwrap();
+                }
                 old_list = html;
                 write_to_sql(&old_list).await;
                 // println!("old_list: {:?}", &old_list);
@@ -192,24 +198,28 @@ async fn write_to_sql(data: &PushList) {
 async fn read_from_sql() -> PushList {
     let db_path = db::get_db_path();
     let conn = rusqlite::Connection::open(db_path).unwrap();
-    let mut stmt = conn.prepare("SELECT * FROM xianbaoku ORDER BY id DESC LIMIT 10").unwrap();
-    let push_iter = stmt.query_map([], |row| {
-        Ok(Push {
-            id: row.get("id")?,
-            cateid: row.get("cateid")?,
-            comments: row.get("comments")?,
-            content: row.get("content")?,
-            catename: row.get("catename")?,
-            datetime: row.get("datetime")?,
-            louzhu: row.get("louzhu")?,
-            louzhuregtime: row.get("louzhuregtime")?,
-            shijianchuo: row.get("shijianchuo")?,
-            shorttime: row.get("shorttime")?,
-            title: row.get("title")?,
-            url: row.get("url")?,
-            yuanurl: row.get("yuanurl")?,
+    let mut stmt = conn
+        .prepare("SELECT * FROM xianbaoku ORDER BY id DESC LIMIT 10")
+        .unwrap();
+    let push_iter = stmt
+        .query_map([], |row| {
+            Ok(Push {
+                id: row.get("id")?,
+                cateid: row.get("cateid")?,
+                comments: row.get("comments")?,
+                content: row.get("content")?,
+                catename: row.get("catename")?,
+                datetime: row.get("datetime")?,
+                louzhu: row.get("louzhu")?,
+                louzhuregtime: row.get("louzhuregtime")?,
+                shijianchuo: row.get("shijianchuo")?,
+                shorttime: row.get("shorttime")?,
+                title: row.get("title")?,
+                url: row.get("url")?,
+                yuanurl: row.get("yuanurl")?,
+            })
         })
-    }).unwrap();
+        .unwrap();
     let mut pushes = Vec::new();
     for push in push_iter {
         pushes.push(push.unwrap());
@@ -221,18 +231,18 @@ async fn read_from_sql() -> PushList {
 async fn read_keyword() -> Vec<String> {
     let db_path = db::get_db_path();
     let conn = rusqlite::Connection::open(db_path).unwrap();
-    let mut stmt = conn.prepare("SELECT keyword FROM keywords WHERE belong = 'xianbaoku'").unwrap();
-    let keyword_iter = stmt.query_map([], |row| {
-        Ok(row.get::<usize,String>(0)?)
-    }).unwrap();
+    let mut stmt = conn
+        .prepare("SELECT keyword FROM keywords WHERE belong = 'xianbaoku'")
+        .unwrap();
+    let keyword_iter = stmt
+        .query_map([], |row| Ok(row.get::<usize, String>(0)?))
+        .unwrap();
     let mut keywords = Vec::new();
     for keyword in keyword_iter {
         keywords.push(keyword.unwrap());
     }
     keywords
 }
-
-
 
 // xianbao服务循环不可用时将状态改为false
 // #[tauri::command]

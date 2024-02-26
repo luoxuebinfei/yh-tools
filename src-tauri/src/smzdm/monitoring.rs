@@ -1,5 +1,6 @@
 use std::fs::{self, OpenOptions};
 
+use dirs::config_dir;
 use reqwest::header::{self, HeaderMap};
 use scraper::{Html, Selector};
 
@@ -143,8 +144,7 @@ pub async fn get_monitor_info(url: String) {
 }
 
 fn read_file() -> Vec<Monitor> {
-    let file_path = r".\data\smzdm_monitor.json";
-    let _ = fs::create_dir_all(r".\data");
+    let file_path = config_dir().unwrap().join("com.yhtools").join("smzdm_monitor.json").to_str().unwrap().to_string();
     let file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -166,8 +166,7 @@ fn read_file() -> Vec<Monitor> {
 }
 
 fn write_file(data: Vec<Monitor>) {
-    let file_path = r".\data\smzdm_monitor.json";
-    let _ = fs::create_dir_all(r".\data");
+    let file_path = config_dir().unwrap().join("com.yhtools").join("smzdm_monitor.json").to_str().unwrap().to_string();
     let file = fs::OpenOptions::new()
         .write(true)
         .truncate(true)

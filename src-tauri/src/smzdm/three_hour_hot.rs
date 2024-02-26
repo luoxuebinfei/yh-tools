@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, OpenOptions},
+    fs::OpenOptions,
     io::Read,
     vec,
 };
@@ -8,6 +8,7 @@ use crate::{db, smzdm::smzdm_struct::*};
 use regex::Regex;
 use reqwest::header;
 use scraper::{Html, Selector};
+use dirs::config_dir;
 
 // use tokio::fs::{self, OpenOptions};
 
@@ -371,8 +372,7 @@ pub async fn get_more_three_hour_hot(
 
 // 读取cookies文件
 pub fn read_smzdm_cookie() -> String {
-    let file_path = r".\data\smzdm_cookies.txt";
-    let _ = fs::create_dir_all(r".\data");
+    let file_path = config_dir().unwrap().join("com.yhtools").join("smzdm_cookies.txt").to_str().unwrap().to_string();
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -384,7 +384,7 @@ pub fn read_smzdm_cookie() -> String {
     s.trim().to_string()
 }
 
-// 读取关键词的json文件
+// 从数据库中读取关键词
 fn read_keyword() -> Keyword {
     let db_path = db::get_db_path();
     let conn = rusqlite::Connection::open(db_path).unwrap();
@@ -413,8 +413,7 @@ fn read_keyword() -> Keyword {
 
 // 读取经过关键词筛选的json文件
 fn read_filter_item() -> Vec<Smzdm> {
-    let file_path = r".\data\smzdm_filter_item.json";
-    let _ = fs::create_dir_all(r".\data");
+    let file_path = config_dir().unwrap().join("com.yhtools").join("smzdm_filter_item.json").to_str().unwrap().to_string();
     let file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -437,8 +436,7 @@ fn read_filter_item() -> Vec<Smzdm> {
 
 // 写入经过关键词筛选的json文件
 fn write_filter_item(data: &Vec<Smzdm>) {
-    let file_path = r".\data\smzdm_filter_item.json";
-    let _ = fs::create_dir_all(r".\data");
+    let file_path = config_dir().unwrap().join("com.yhtools").join("smzdm_filter_item.json").to_str().unwrap().to_string();
     let file = OpenOptions::new()
         .write(true)
         .truncate(true)
